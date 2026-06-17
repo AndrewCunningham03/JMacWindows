@@ -315,6 +315,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <!-- MAP -->
     <div class="tab" id="tab-map">
       <div class="map-filter" id="map-filter-row"></div>
+      <div style="padding:8px 12px;background:var(--white);border-bottom:1px solid var(--gray-border);display:flex;gap:8px;align-items:center;flex-shrink:0">
+        <button class="btn btn-amber btn-sm" onclick="geocodeAll()" id="geocode-btn" style="flex:1;justify-content:center">📌 Map all addresses</button>
+      </div>
       <div class="map-toolbar" id="map-toolbar" style="display:none">
         <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">🗺️ Open full route in Google Maps</button>
         <button class="btn btn-sm" onclick="clearRouteMode()">✕ Exit</button>

@@ -187,7 +187,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .notify-msg-box{background:#f0fdf4;border-left:3px solid var(--green);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px;font-size:14px;line-height:1.6;margin:10px 0;color:#15803d}
 .notify-actions{display:flex;gap:8px;flex-wrap:wrap}
 
-/* Modal */
+/* Modal (mark-done only) */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:var(--radius) var(--radius) 0 0;padding:20px 16px;padding-bottom:calc(20px + var(--safe-bottom));width:100%;max-width:480px;max-height:92vh;overflow-y:auto}
@@ -195,13 +195,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
 .field{margin-bottom:13px}
 .field label{display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:4px}
-.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;background:var(--white);color:var(--text);outline:none}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;background:var(--white);color:var(--text);outline:none;-webkit-appearance:none}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
 .field textarea{min-height:70px;resize:none}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-actions{display:flex;gap:8px;margin-top:16px}
 .modal-actions .btn{flex:1;justify-content:center}
 .field-hint{font-size:11px;color:var(--text-muted);margin-top:3px}
+
+/* Full-screen edit/add form */
+.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.screen.open{display:flex;transform:translateX(0)}
+.screen-header{background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.screen-header-title{font-size:17px;font-weight:700;flex:1}
+.screen-back{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer}
+.screen-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.screen-footer{padding:12px 16px;padding-bottom:calc(12px + var(--safe-bottom));background:var(--white);border-top:1px solid var(--gray-border);display:flex;gap:8px;flex-shrink:0}
 
 /* Toast */
 .toast{position:fixed;bottom:calc(70px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .25s;z-index:200;white-space:nowrap;pointer-events:none}
@@ -350,19 +359,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   </nav>
 </div>
 
-<button class="fab" onclick="openAddModal()" aria-label="Add customer">+</button>
+<button class="fab" id="fab-add" onclick="openEditScreen(null)" aria-label="Add customer">+</button>
 
-<!-- CUSTOMER MODAL -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-title">Add customer</div>
-
+<!-- FULL-SCREEN ADD / EDIT FORM -->
+<div class="screen" id="edit-screen">
+  <div class="screen-header">
+    <button class="screen-back" onclick="closeEditScreen()">← Back</button>
+    <div class="screen-header-title" id="edit-screen-title">Add customer</div>
+    <button class="screen-back" id="edit-delete-btn" onclick="deleteCustomer()" style="display:none;background:rgba(220,38,38,0.3)">Delete</button>
+  </div>
+  <div class="screen-body">
     <div class="field-row">
-      <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name"></div>
-      <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="numeric"></div>
+      <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name" autocomplete="off"></div>
+      <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
     </div>
-    <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode"></div>
+    <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode" autocomplete="off"></div>
     <div class="field-row">
       <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44…"></div>
       <div class="field"><label>WhatsApp</label><input id="f-whatsapp" type="tel" placeholder="if different"></div>
@@ -384,19 +395,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div class="field"><label>No. of windows</label><input id="f-windows" type="number" placeholder="0" inputmode="numeric"></div>
       <div class="field"><label>Gate / access code</label><input id="f-gate" type="text" placeholder="e.g. 1234"></div>
     </div>
-    <div class="field"><label>Directions for employee</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round back…" style="min-height:55px"></textarea></div>
+    <div class="field"><label>Directions</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round back…" style="min-height:55px"></textarea></div>
     <div class="field"><label>Stripe payment link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/…">
-      <div class="field-hint">Paste your Stripe payment link so customers can pay online</div>
+      <div class="field-hint">Paste your Stripe link so customers can pay online</div>
     </div>
     <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notes…" style="min-height:55px"></textarea></div>
-
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-blue" id="save-btn" onclick="saveCustomer()">Save</button>
-    </div>
-    <div id="delete-wrap" style="margin-top:10px;display:none">
-      <button class="btn btn-full" style="color:var(--red);border-color:var(--red-light)" onclick="deleteCustomer()">Delete customer</button>
-    </div>
+  </div>
+  <div class="screen-footer">
+    <button class="btn btn-full btn-blue" id="save-btn" onclick="saveCustomer()">Save customer</button>
   </div>
 </div>
 
@@ -764,31 +770,31 @@ function renderCustomers(){
     return`<div class="customer-card${od?' overdue':''}">
       <div class="card-top">
         <div style="flex:1;min-width:0">
-          <div class="card-name">${esc(c.name)} ${od?'<span class="badge badge-red" style="font-size:10px;padding:1px 6px">OVERDUE</span>':''}</div>
+          <div class="card-name">${esc(c.name)}${od?' <span class="badge badge-red" style="font-size:10px;padding:1px 6px">OVERDUE</span>':''}</div>
           <div class="card-addr">${esc(c.addr||'No address saved')}</div>
           <div class="card-detail">
-            ${c.windows_count?`<span>🪟 ${c.windows_count} windows</span>`:''}
+            ${days!==null?`<span>🗓 ${days}d ago</span>`:'<span style="color:var(--amber)">Never cleaned</span>'}
+            ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
             ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
-            ${days!==null?`<span>🗓 ${days}d ago</span>`:''}
           </div>
-          ${c.directions?`<div class="card-note">📍 ${esc(c.directions)}</div>`:''}
           ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
-        <button class="btn btn-icon" onclick="openEditModal(${c.id})">✏️</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
+            <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
+          </button>
+          <button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>
+        </div>
       </div>
-      <div class="card-badges">
+      <div class="card-badges" style="margin-top:8px">
         <span class="badge badge-blue">${esc(c.route)}</span>
-        <span class="badge ${c.freq==='monthly'?'badge-blue':'badge-amber'}">${c.freq==='monthly'?'Monthly':'2-month'}</span>
-        <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
-          <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
-        </button>
+        <span class="badge ${c.freq==='monthly'?'badge-gray':'badge-amber'}">${c.freq==='monthly'?'Monthly':'2-month'}</span>
       </div>
       <div class="card-actions">
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}" class="btn btn-sm btn-green">💬 WhatsApp</a>`:''}
-        ${c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Remind</a>`:''}
-        ${c.stripe_link?`<a href="${esc(c.stripe_link)}" class="btn btn-sm btn-purple" target="_blank">💳 Pay link</a>`:''}
-        <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-green">✅ Done</button>
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm btn-green">💬 WhatsApp</a>`:''}
+        ${!c.paid&&c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase pay</a>`:''}
+        <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Mark done</button>
       </div>
     </div>`;
   }).join('');
@@ -1115,42 +1121,50 @@ function getMsg(c,type){
   return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning. No rush, whenever you get a chance! Thanks 🪣`;
 }
 
-// ── MODAL ─────────────────────────────────────────────────────────────────────
-function openAddModal(){
-  editingId=null;
-  document.getElementById('modal-title').textContent='Add customer';
-  document.getElementById('delete-wrap').style.display='none';
-  ['name','addr','phone','whatsapp','notes','directions','gate','stripe'].forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
-  document.getElementById('f-price').value=20;
-  document.getElementById('f-windows').value='';
-  document.getElementById('f-route').selectedIndex=0;
-  document.getElementById('f-freq').selectedIndex=0;
-  document.getElementById('modal').classList.add('open');
-}
-function openEditModal(id){
+// ── EDIT SCREEN ───────────────────────────────────────────────────────────────
+function openEditScreen(id){
   editingId=id;
-  const c=customers.find(x=>x.id===id);
-  document.getElementById('modal-title').textContent='Edit — '+c.name;
-  document.getElementById('delete-wrap').style.display='block';
-  document.getElementById('f-name').value=c.name;
-  document.getElementById('f-addr').value=c.addr||'';
-  document.getElementById('f-phone').value=c.phone||'';
-  document.getElementById('f-whatsapp').value=c.whatsapp||'';
-  document.getElementById('f-route').value=c.route;
-  document.getElementById('f-freq').value=c.freq;
-  document.getElementById('f-price').value=c.price;
-  document.getElementById('f-windows').value=c.windows_count||'';
-  document.getElementById('f-gate').value=c.gate_code||'';
-  document.getElementById('f-directions').value=c.directions||'';
-  document.getElementById('f-stripe').value=c.stripe_link||'';
-  document.getElementById('f-notes').value=c.notes||'';
-  document.getElementById('modal').classList.add('open');
+  const screen=document.getElementById('edit-screen');
+  const delBtn=document.getElementById('edit-delete-btn');
+  if(id){
+    const c=customers.find(x=>x.id===id);
+    document.getElementById('edit-screen-title').textContent='Edit customer';
+    delBtn.style.display='block';
+    document.getElementById('f-name').value=c.name;
+    document.getElementById('f-addr').value=c.addr||'';
+    document.getElementById('f-phone').value=c.phone||'';
+    document.getElementById('f-whatsapp').value=c.whatsapp||'';
+    document.getElementById('f-route').value=c.route;
+    document.getElementById('f-freq').value=c.freq;
+    document.getElementById('f-price').value=c.price;
+    document.getElementById('f-windows').value=c.windows_count||'';
+    document.getElementById('f-gate').value=c.gate_code||'';
+    document.getElementById('f-directions').value=c.directions||'';
+    document.getElementById('f-stripe').value=c.stripe_link||'';
+    document.getElementById('f-notes').value=c.notes||'';
+  } else {
+    document.getElementById('edit-screen-title').textContent='Add customer';
+    delBtn.style.display='none';
+    ['name','addr','phone','whatsapp','notes','directions','gate','stripe'].forEach(f=>{
+      const el=document.getElementById('f-'+f);if(el)el.value='';
+    });
+    document.getElementById('f-price').value=20;
+    document.getElementById('f-windows').value='';
+    document.getElementById('f-route').selectedIndex=0;
+    document.getElementById('f-freq').selectedIndex=0;
+  }
+  screen.style.display='flex';
+  requestAnimationFrame(()=>screen.classList.add('open'));
 }
-function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeEditScreen(){
+  const screen=document.getElementById('edit-screen');
+  screen.classList.remove('open');
+  setTimeout(()=>{screen.style.display='none';},260);
+}
 
 async function saveCustomer(){
   const name=document.getElementById('f-name').value.trim();
-  if(!name){alert('Please enter a name');return;}
+  if(!name){showToast('Please enter a name');return;}
   const btn=document.getElementById('save-btn');
   btn.textContent='Saving…';btn.disabled=true;
   const addr=document.getElementById('f-addr').value.trim();
@@ -1167,29 +1181,28 @@ async function saveCustomer(){
     stripe_link:document.getElementById('f-stripe').value.trim(),
     notes:document.getElementById('f-notes').value.trim()
   };
-  // Geocode address for map
   const coords=await geocode(addr);
   if(coords){data.lat=coords.lat;data.lng=coords.lng;}
-
   if(editingId){
     await db.from('customers').update(data).eq('id',editingId);
     Object.assign(customers.find(x=>x.id===editingId),data);
   } else {
-    const {data:newC}=await db.from('customers').insert({...data,paid:false,last_cleaned:'',route_order:999}).select().single();
+    const {data:newC,error}=await db.from('customers').insert({...data,paid:false,last_cleaned:'',route_order:999}).select().single();
     if(newC)customers.push(newC);
+    if(error){showToast('Error saving: '+error.message);btn.textContent='Save customer';btn.disabled=false;return;}
   }
-  btn.textContent='Save';btn.disabled=false;
-  closeModal();renderCustomers();renderDashboard();
-  showToast(editingId?'Customer updated':'Customer added');
+  btn.textContent='Save customer';btn.disabled=false;
+  closeEditScreen();
+  renderCustomers();renderDashboard();
+  showToast(editingId?'Customer updated':'Customer added ✓');
 }
 async function deleteCustomer(){
-  if(!confirm('Delete this customer?'))return;
+  if(!confirm('Delete this customer? This cannot be undone.'))return;
   await db.from('customers').delete().eq('id',editingId);
   customers=customers.filter(x=>x.id!==editingId);
-  closeModal();renderCustomers();renderDashboard();
+  closeEditScreen();renderCustomers();renderDashboard();
   showToast('Customer deleted');
 }
-document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

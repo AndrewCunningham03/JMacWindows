@@ -160,6 +160,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 #map{flex:1;min-height:0}
 .map-filter{padding:10px 12px;background:var(--white);border-bottom:1px solid var(--gray-border);display:flex;gap:8px;overflow-x:auto;flex-shrink:0}
 .map-filter::-webkit-scrollbar{display:none}
+.map-toolbar{padding:8px 12px;background:var(--white);border-bottom:1px solid var(--gray-border);display:flex;gap:8px;align-items:center;flex-shrink:0}
+.map-info{padding:8px 12px;background:var(--blue-light);border-bottom:1px solid #bae6fd;font-size:12px;color:var(--blue-dark);flex-shrink:0;display:none}
+.map-info.show{display:block}
+.leaflet-marker-num{background:var(--blue);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
 
 /* Payments */
 .pay-card{background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:13px;margin-bottom:10px}
@@ -283,6 +287,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <!-- MAP -->
     <div class="tab" id="tab-map">
       <div class="map-filter" id="map-filter-row"></div>
+      <div class="map-toolbar" id="map-toolbar" style="display:none">
+        <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">🗺️ Open route in Google Maps</button>
+        <button class="btn btn-sm" onclick="clearRouteMode()">✕</button>
+      </div>
+      <div class="map-info" id="map-info"></div>
       <div id="map"></div>
     </div>
 
@@ -794,30 +803,74 @@ async function togglePaid(id){
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
+let routeLine = null;
+
 function initMap(){
-  const mapFilter=document.getElementById('map-filter-row');
-  mapFilter.innerHTML='<button class="chip active" onclick="setMapRoute(\'\',this)">All</button>'+
+  document.getElementById('map-filter-row').innerHTML=
+    '<button class="chip active" onclick="setMapRoute(\'\',this)">All customers</button>'+
     ROUTES.map(r=>`<button class="chip" onclick="setMapRoute('${r.replace(/'/g,"\\'")}',this)">${r}</button>`).join('');
 
-  if(mapInstance){mapInstance.remove();mapInstance=null;}
-  mapInstance=L.map('map',{zoomControl:true}).setView([54.2,[-6.7][0]],10);
+  if(mapInstance){mapInstance.remove();mapInstance=null;routeLine=null;}
+  mapInstance=L.map('map',{zoomControl:true}).setView([54.2,-6.7],10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap',maxZoom:19
   }).addTo(mapInstance);
-
   addMapMarkers();
 }
 
 function addMapMarkers(){
   if(!mapInstance)return;
-  mapInstance.eachLayer(l=>{if(l instanceof L.Marker)mapInstance.removeLayer(l);});
-  const list=mapRouteFilter?customers.filter(c=>c.route===mapRouteFilter):customers;
-  list.filter(c=>c.lat&&c.lng).forEach(c=>{
-    const color=isOverdue(c)?'red':c.paid?'green':'blue';
-    const icon=L.divIcon({className:'',html:`<div style="width:14px;height:14px;border-radius:50%;background:${color==='red'?'#dc2626':color==='green'?'#16a34a':'#0ea5e9'};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,iconSize:[14,14]});
+  // clear old markers and line
+  mapInstance.eachLayer(l=>{if(l instanceof L.Marker||l instanceof L.Polyline)mapInstance.removeLayer(l);});
+  routeLine=null;
+
+  const isRouteMode = !!mapRouteFilter;
+  document.getElementById('map-toolbar').style.display = isRouteMode ? 'flex' : 'none';
+
+  let list = mapRouteFilter
+    ? [...customers.filter(c=>c.route===mapRouteFilter)].sort((a,b)=>(a.route_order||999)-(b.route_order||999))
+    : customers;
+
+  const withCoords = list.filter(c=>c.lat&&c.lng);
+  const missing = list.filter(c=>!c.lat||!c.lng);
+
+  // draw route line if in route mode
+  if(isRouteMode && withCoords.length > 1){
+    const latlngs = withCoords.map(c=>[c.lat,c.lng]);
+    routeLine = L.polyline(latlngs,{color:'#0ea5e9',weight:3,opacity:0.7,dashArray:'6,6'}).addTo(mapInstance);
+    mapInstance.fitBounds(routeLine.getBounds(),{padding:[30,30]});
+  }
+
+  // add markers
+  withCoords.forEach((c,i)=>{
+    const num = isRouteMode ? i+1 : null;
+    const bgColor = isOverdue(c)?'#dc2626':c.paid?'#16a34a':'#0ea5e9';
+    const html = num
+      ? `<div class="leaflet-marker-num" style="background:${bgColor}">${num}</div>`
+      : `<div style="width:13px;height:13px;border-radius:50%;background:${bgColor};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`;
+    const icon = L.divIcon({className:'',html,iconSize:num?[26,26]:[13,13],iconAnchor:num?[13,13]:[7,7]});
     L.marker([c.lat,c.lng],{icon}).addTo(mapInstance)
-      .bindPopup(`<b>${c.name}</b><br>${c.addr||''}<br><small>${c.route}</small>${c.phone?`<br><a href="tel:${c.phone}">📞 ${c.phone}</a>`:''}${c.gate_code?`<br>🔑 ${c.gate_code}`:''}`);
+      .bindPopup(`
+        <b>${c.name}</b>${num?` <small>(Stop ${num})</small>`:''}<br>
+        ${c.addr||''}<br>
+        <small style="color:#6b7280">${c.route}</small>
+        ${c.phone?`<br><a href="tel:${c.phone}" style="color:#0ea5e9">📞 Call</a>`:''}
+        ${c.gate_code?`<br>🔑 Gate: <b>${c.gate_code}</b>`:''}
+        ${c.notes?`<br>⚠️ ${c.notes}`:''}
+        ${isRouteMode?`<br><a href="https://maps.google.com/?q=${encodeURIComponent(c.addr)}" target="_blank" style="color:#0ea5e9">Open in Maps</a>`:''}
+      `);
   });
+
+  // info bar
+  const info = document.getElementById('map-info');
+  if(isRouteMode){
+    info.classList.add('show');
+    const noCoords = missing.length;
+    info.innerHTML = `📍 ${withCoords.length} stops mapped in order${noCoords?` · <b>${noCoords} missing location</b> (re-save their address to add them)`:''}
+      <br>🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
+  } else {
+    info.classList.remove('show');
+  }
 }
 
 function setMapRoute(r,btn){
@@ -825,6 +878,29 @@ function setMapRoute(r,btn){
   document.querySelectorAll('#map-filter-row .chip').forEach(c=>c.classList.remove('active'));
   if(btn)btn.classList.add('active');
   addMapMarkers();
+}
+
+function clearRouteMode(){
+  mapRouteFilter='';
+  document.querySelectorAll('#map-filter-row .chip').forEach((c,i)=>{c.classList.toggle('active',i===0);});
+  addMapMarkers();
+}
+
+function navigateRoute(){
+  const list=[...customers.filter(c=>c.route===mapRouteFilter&&c.addr)]
+    .sort((a,b)=>(a.route_order||999)-(b.route_order||999));
+  if(!list.length){showToast('No addresses on this route');return;}
+  // Google Maps directions URL — uses addresses directly, no coords needed
+  const addrs=list.map(c=>encodeURIComponent(c.addr)).filter(Boolean);
+  if(addrs.length===1){
+    window.open(`https://www.google.com/maps/search/?api=1&query=${addrs[0]}`,'_blank');
+    return;
+  }
+  const origin=addrs[0];
+  const dest=addrs[addrs.length-1];
+  const waypoints=addrs.slice(1,-1).join('|');
+  const url=`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${waypoints?`&waypoints=${waypoints}`:''}&travelmode=driving`;
+  window.open(url,'_blank');
 }
 
 async function geocode(addr){

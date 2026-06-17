@@ -22,5 +22,5 @@ create table if not exists scheduled_jobs (
   created_at timestamptz default now()
 );
 alter table scheduled_jobs enable row level security;
-create policy if not exists "authenticated_schedule" on scheduled_jobs
+create policy "authenticated_schedule" on scheduled_jobs
   for all to authenticated using (true) with check (true);

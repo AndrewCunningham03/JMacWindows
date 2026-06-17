@@ -1181,20 +1181,36 @@ async function saveCustomer(){
     stripe_link:document.getElementById('f-stripe').value.trim(),
     notes:document.getElementById('f-notes').value.trim()
   };
-  const coords=await geocode(addr);
-  if(coords){data.lat=coords.lat;data.lng=coords.lng;}
-  if(editingId){
-    await db.from('customers').update(data).eq('id',editingId);
-    Object.assign(customers.find(x=>x.id===editingId),data);
-  } else {
-    const {data:newC,error}=await db.from('customers').insert({...data,paid:false,last_cleaned:'',route_order:999}).select().single();
-    if(newC)customers.push(newC);
-    if(error){showToast('Error saving: '+error.message);btn.textContent='Save customer';btn.disabled=false;return;}
+  try{
+    let savedId=editingId;
+    if(editingId){
+      const {error}=await db.from('customers').update(data).eq('id',editingId);
+      if(error)throw error;
+      Object.assign(customers.find(x=>x.id===editingId),data);
+    } else {
+      const {data:newC,error}=await db.from('customers').insert({...data,paid:false,last_cleaned:'',route_order:999}).select().single();
+      if(error)throw error;
+      customers.push(newC);
+      savedId=newC.id;
+    }
+    btn.textContent='Save customer';btn.disabled=false;
+    closeEditScreen();
+    renderCustomers();renderDashboard();
+    showToast(editingId?'Customer updated ✓':'Customer added ✓');
+    // geocode in background after save — doesn't block the UI
+    if(addr&&savedId){
+      geocode(addr).then(coords=>{
+        if(coords){
+          db.from('customers').update({lat:coords.lat,lng:coords.lng}).eq('id',savedId);
+          const c=customers.find(x=>x.id===savedId);
+          if(c){c.lat=coords.lat;c.lng=coords.lng;}
+        }
+      }).catch(()=>{});
+    }
+  }catch(err){
+    btn.textContent='Save customer';btn.disabled=false;
+    showToast('Error: '+(err.message||'Could not save'));
   }
-  btn.textContent='Save customer';btn.disabled=false;
-  closeEditScreen();
-  renderCustomers();renderDashboard();
-  showToast(editingId?'Customer updated':'Customer added ✓');
 }
 async function deleteCustomer(){
   if(!confirm('Delete this customer? This cannot be undone.'))return;

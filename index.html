@@ -926,21 +926,20 @@ function showStop(idx){
   currentStopIdx=Math.max(0,Math.min(idx,routeStops.length-1));
   const c=routeStops[currentStopIdx];
 
-  // highlight marker
-  mapMarkers.forEach((m,i)=>{
-    const isActive = routeStops[currentStopIdx]?.id===m.id;
-    const bgColor = isOverdue(routeStops.find(s=>s.id===m.id)||{})?'#dc2626':
-      (routeStops.find(s=>s.id===m.id)||{}).paid?'#16a34a':'#0ea5e9';
-    const activeBg = isActive?'#7c3aed':bgColor;
-    const num = routeStops.findIndex(s=>s.id===m.id)+1;
+  // highlight the active marker purple, others normal colour
+  mapMarkers.forEach(m=>{
+    const stop=routeStops.find(s=>s.id===m.id);
+    if(!stop)return;
+    const isActive=stop.id===c.id;
+    const bg=isActive?'#7c3aed':isOverdue(stop)?'#dc2626':stop.paid?'#16a34a':'#0ea5e9';
+    const num=routeStops.indexOf(stop)+1;
     m.marker.setIcon(L.divIcon({
       className:'',
-      html:`<div class="leaflet-marker-num${isActive?' active-stop':''}" style="background:${activeBg}">${num}</div>`,
+      html:`<div class="leaflet-marker-num" style="background:${bg};${isActive?'transform:scale(1.25);z-index:999':''}">${num}</div>`,
       iconSize:[30,30],iconAnchor:[15,15]
     }));
   });
 
-  // pan map to stop if it has coords
   if(c.lat&&c.lng) mapInstance.panTo([c.lat,c.lng],{animate:true});
 
   document.getElementById('stop-counter').textContent=`Stop ${currentStopIdx+1} of ${routeStops.length}`;
@@ -949,12 +948,11 @@ function showStop(idx){
 
   const tags=[];
   if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
-  if(c.paid) tags.push(`<span class="badge badge-green">✓ Paid £${c.price}</span>`);
-  else tags.push(`<span class="badge badge-red">Unpaid £${c.price}</span>`);
+  tags.push(c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">Unpaid £${c.price}</span>`);
   if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
   if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
   if(c.notes) tags.push(`<span class="badge badge-amber">⚠️ ${esc(c.notes)}</span>`);
-  if(c.directions) tags.push(`<span class="badge badge-gray">📍 ${esc(c.directions)}</span>`);
+  if(c.directions) tags.push(`<span class="badge badge-gray" style="font-size:11px">📍 ${esc(c.directions)}</span>`);
   document.getElementById('stop-tags').innerHTML=tags.join('');
 
   const waNum=c.whatsapp||c.phone;
@@ -965,15 +963,11 @@ function showStop(idx){
   actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
   document.getElementById('stop-actions').innerHTML=actions.join('');
 
-  const card=document.getElementById('stop-card');
-  card.style.display='block';
-  requestAnimationFrame(()=>card.classList.add('show'));
+  document.getElementById('stop-card').classList.add('show');
 }
 
 function hideStopCard(){
-  const card=document.getElementById('stop-card');
-  card.classList.remove('show');
-  setTimeout(()=>{card.style.display='none';},310);
+  document.getElementById('stop-card').classList.remove('show');
 }
 function prevStop(){if(currentStopIdx>0)showStop(currentStopIdx-1);}
 function nextStop(){if(currentStopIdx<routeStops.length-1)showStop(currentStopIdx+1);}

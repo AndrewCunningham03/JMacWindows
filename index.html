@@ -911,11 +911,16 @@ function addMapMarkers(){
   const info = document.getElementById('map-info');
   if(isRouteMode){
     info.classList.add('show');
-    info.innerHTML = `📍 <b>${withCoords.length}</b> stops on map${missing.length?` · <span style="color:var(--red)">${missing.length} missing coords</span> (re-save address to fix)`:''}
-      &nbsp;·&nbsp; 🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
+    const missingCount = missing.length;
+    info.innerHTML = `📍 <b>${withCoords.length}</b> of ${list.length} stops on map
+      ${missingCount?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${missingCount} missing locations</button>`:''}
+      <br>🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
     if(routeStops.length){currentStopIdx=0;showStop(0);}
   } else {
-    info.classList.remove('show');
+    const allMissing=customers.filter(c=>c.addr&&(!c.lat||!c.lng)).length;
+    info.classList.add('show');
+    info.innerHTML=`${customers.filter(c=>c.lat&&c.lng).length} of ${customers.length} customers on map
+      ${allMissing?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${allMissing} missing</button>`:''}`;
     hideStopCard();
   }
 }
@@ -1013,6 +1018,26 @@ function navigateRoute(){
   const waypoints=addrs.slice(1,-1).join('|');
   const url=`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${waypoints?`&waypoints=${waypoints}`:''}&travelmode=driving`;
   window.open(url,'_blank');
+}
+
+async function geocodeAll(){
+  const toFix=customers.filter(c=>c.addr&&c.addr.length>4&&(!c.lat||!c.lng));
+  if(!toFix.length){showToast('All addresses already mapped!');return;}
+  const info=document.getElementById('map-info');
+  showToast(`Mapping ${toFix.length} addresses — please wait…`);
+  let done=0,failed=0;
+  for(const c of toFix){
+    info.innerHTML=`📌 Mapping addresses… ${done}/${toFix.length} done${failed?` · ${failed} failed`:''}`;
+    const coords=await geocode(c.addr);
+    if(coords){
+      c.lat=coords.lat;c.lng=coords.lng;
+      await db.from('customers').update({lat:coords.lat,lng:coords.lng}).eq('id',c.id);
+      done++;
+    } else { failed++; }
+    await new Promise(r=>setTimeout(r,1100)); // Nominatim rate limit: 1/sec
+  }
+  showToast(`Done! ${done} addresses mapped${failed?`, ${failed} couldn't be found`:''}`);
+  addMapMarkers();
 }
 
 async function geocode(addr){

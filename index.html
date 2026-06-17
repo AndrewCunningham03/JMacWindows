@@ -167,8 +167,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .leaflet-marker-num.active-stop{background:var(--purple);transform:scale(1.25);z-index:9999}
 
 /* Stop preview card */
-.stop-card{background:var(--white);border-top:2px solid var(--blue);box-shadow:0 -4px 16px rgba(0,0,0,0.12);flex-shrink:0;display:none}
-.stop-card.show{display:block}
+.stop-card{background:var(--white);border-top:2px solid var(--blue);flex-shrink:0;min-height:130px}
 .stop-card-handle{width:36px;height:4px;background:var(--gray-border);border-radius:2px;margin:10px auto 0}
 .stop-card-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px}
 .stop-counter{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
@@ -965,12 +964,14 @@ function showStop(idx){
   if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">🗺️ Navigate</a>`);
   actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
   document.getElementById('stop-actions').innerHTML=actions.join('');
-
-  document.getElementById('stop-card').classList.add('show');
 }
 
 function hideStopCard(){
-  document.getElementById('stop-card').classList.remove('show');
+  document.getElementById('stop-counter').textContent='';
+  document.getElementById('stop-name').textContent='';
+  document.getElementById('stop-addr').textContent='Select a route above to see stops';
+  document.getElementById('stop-tags').innerHTML='';
+  document.getElementById('stop-actions').innerHTML='';
 }
 function prevStop(){if(currentStopIdx>0)showStop(currentStopIdx-1);}
 function nextStop(){if(currentStopIdx<routeStops.length-1)showStop(currentStopIdx+1);}

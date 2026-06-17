@@ -163,7 +163,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .map-toolbar{padding:8px 12px;background:var(--white);border-bottom:1px solid var(--gray-border);display:flex;gap:8px;align-items:center;flex-shrink:0}
 .map-info{padding:8px 12px;background:var(--blue-light);border-bottom:1px solid #bae6fd;font-size:12px;color:var(--blue-dark);flex-shrink:0;display:none}
 .map-info.show{display:block}
-.leaflet-marker-num{background:var(--blue);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.leaflet-marker-num{background:var(--blue);color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+.leaflet-marker-num.active-stop{background:var(--purple);transform:scale(1.25);z-index:9999}
+
+/* Stop preview card */
+.stop-card{position:absolute;bottom:0;left:0;right:0;background:var(--white);border-radius:16px 16px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.15);z-index:400;transform:translateY(100%);transition:transform .3s ease;padding-bottom:var(--safe-bottom);display:none}
+.stop-card.show{display:block;transform:translateY(0)}
+.stop-card-handle{width:36px;height:4px;background:var(--gray-border);border-radius:2px;margin:10px auto 0}
+.stop-card-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px}
+.stop-counter{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
+.stop-nav-btns{display:flex;gap:6px}
+.stop-nav-btn{background:var(--gray-light);border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text)}
+.stop-nav-btn:active{opacity:0.7}
+.stop-card-body{padding:0 14px 10px}
+.stop-name{font-size:18px;font-weight:700;margin-bottom:2px}
+.stop-addr{font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.stop-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.stop-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Locate me button */
+.map-locate-btn{position:absolute;bottom:0;right:10px;z-index:410;background:var(--white);border:2px solid var(--gray-border);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
 
 /* Payments */
 .pay-card{background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:13px;margin-bottom:10px}
@@ -294,14 +313,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     </div>
 
     <!-- MAP -->
-    <div class="tab" id="tab-map">
+    <div class="tab" id="tab-map" style="position:relative">
       <div class="map-filter" id="map-filter-row"></div>
       <div class="map-toolbar" id="map-toolbar" style="display:none">
-        <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">🗺️ Open route in Google Maps</button>
-        <button class="btn btn-sm" onclick="clearRouteMode()">✕</button>
+        <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">🗺️ Open full route in Google Maps</button>
+        <button class="btn btn-sm" onclick="clearRouteMode()">✕ Exit</button>
       </div>
       <div class="map-info" id="map-info"></div>
-      <div id="map"></div>
+      <div id="map" style="position:relative"></div>
+      <button class="map-locate-btn" id="locate-btn" onclick="locateMe()" title="Find my location">📍</button>
+
+      <!-- STOP PREVIEW CARD -->
+      <div class="stop-card" id="stop-card">
+        <div class="stop-card-handle"></div>
+        <div class="stop-card-nav">
+          <div class="stop-counter" id="stop-counter">Stop 1 of 1</div>
+          <div class="stop-nav-btns">
+            <button class="stop-nav-btn" onclick="prevStop()">← Prev</button>
+            <button class="stop-nav-btn" onclick="nextStop()">Next →</button>
+          </div>
+        </div>
+        <div class="stop-card-body">
+          <div class="stop-name" id="stop-name"></div>
+          <div class="stop-addr" id="stop-addr"></div>
+          <div class="stop-tags" id="stop-tags"></div>
+          <div class="stop-actions" id="stop-actions"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ROUTES -->
@@ -810,6 +848,9 @@ async function togglePaid(id){
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
 let routeLine = null;
+let routeStops = [];
+let currentStopIdx = 0;
+let mapMarkers = [];
 
 function initMap(){
   document.getElementById('map-filter-row').innerHTML=
@@ -817,18 +858,18 @@ function initMap(){
     ROUTES.map(r=>`<button class="chip" onclick="setMapRoute('${r.replace(/'/g,"\\'")}',this)">${r}</button>`).join('');
 
   if(mapInstance){mapInstance.remove();mapInstance=null;routeLine=null;}
-  mapInstance=L.map('map',{zoomControl:true}).setView([54.2,-6.7],10);
+  mapInstance=L.map('map',{zoomControl:false}).setView([54.2,-6.7],10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap',maxZoom:19
   }).addTo(mapInstance);
+  L.control.zoom({position:'topright'}).addTo(mapInstance);
   addMapMarkers();
 }
 
 function addMapMarkers(){
   if(!mapInstance)return;
-  // clear old markers and line
   mapInstance.eachLayer(l=>{if(l instanceof L.Marker||l instanceof L.Polyline)mapInstance.removeLayer(l);});
-  routeLine=null;
+  routeLine=null; mapMarkers=[];
 
   const isRouteMode = !!mapRouteFilter;
   document.getElementById('map-toolbar').style.display = isRouteMode ? 'flex' : 'none';
@@ -837,47 +878,104 @@ function addMapMarkers(){
     ? [...customers.filter(c=>c.route===mapRouteFilter)].sort((a,b)=>(a.route_order||999)-(b.route_order||999))
     : customers;
 
+  routeStops = isRouteMode ? list : [];
+
   const withCoords = list.filter(c=>c.lat&&c.lng);
   const missing = list.filter(c=>!c.lat||!c.lng);
 
-  // draw route line if in route mode
   if(isRouteMode && withCoords.length > 1){
     const latlngs = withCoords.map(c=>[c.lat,c.lng]);
-    routeLine = L.polyline(latlngs,{color:'#0ea5e9',weight:3,opacity:0.7,dashArray:'6,6'}).addTo(mapInstance);
-    mapInstance.fitBounds(routeLine.getBounds(),{padding:[30,30]});
+    routeLine = L.polyline(latlngs,{color:'#0ea5e9',weight:4,opacity:0.6,dashArray:'8,6'}).addTo(mapInstance);
+    mapInstance.fitBounds(routeLine.getBounds(),{padding:[40,40]});
   }
 
-  // add markers
   withCoords.forEach((c,i)=>{
     const num = isRouteMode ? i+1 : null;
     const bgColor = isOverdue(c)?'#dc2626':c.paid?'#16a34a':'#0ea5e9';
     const html = num
       ? `<div class="leaflet-marker-num" style="background:${bgColor}">${num}</div>`
-      : `<div style="width:13px;height:13px;border-radius:50%;background:${bgColor};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`;
-    const icon = L.divIcon({className:'',html,iconSize:num?[26,26]:[13,13],iconAnchor:num?[13,13]:[7,7]});
-    L.marker([c.lat,c.lng],{icon}).addTo(mapInstance)
-      .bindPopup(`
-        <b>${c.name}</b>${num?` <small>(Stop ${num})</small>`:''}<br>
-        ${c.addr||''}<br>
-        <small style="color:#6b7280">${c.route}</small>
-        ${c.phone?`<br><a href="tel:${c.phone}" style="color:#0ea5e9">📞 Call</a>`:''}
-        ${c.gate_code?`<br>🔑 Gate: <b>${c.gate_code}</b>`:''}
-        ${c.notes?`<br>⚠️ ${c.notes}`:''}
-        ${isRouteMode?`<br><a href="https://maps.google.com/?q=${encodeURIComponent(c.addr)}" target="_blank" style="color:#0ea5e9">Open in Maps</a>`:''}
-      `);
+      : `<div style="width:14px;height:14px;border-radius:50%;background:${bgColor};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.35)"></div>`;
+    const icon = L.divIcon({className:'',html,iconSize:num?[30,30]:[14,14],iconAnchor:num?[15,15]:[7,7]});
+    const marker = L.marker([c.lat,c.lng],{icon}).addTo(mapInstance);
+    if(isRouteMode){
+      // find index in routeStops list (not withCoords)
+      const stopIdx = routeStops.findIndex(s=>s.id===c.id);
+      marker.on('click',()=>showStop(stopIdx));
+    } else {
+      marker.bindPopup(`<b>${esc(c.name)}</b><br><small>${esc(c.addr||'')}</small>${c.phone?`<br><a href="tel:${c.phone}">📞 Call</a>`:''}`);
+    }
+    mapMarkers.push({id:c.id,marker});
   });
 
-  // info bar
   const info = document.getElementById('map-info');
   if(isRouteMode){
     info.classList.add('show');
-    const noCoords = missing.length;
-    info.innerHTML = `📍 ${withCoords.length} stops mapped in order${noCoords?` · <b>${noCoords} missing location</b> (re-save their address to add them)`:''}
-      <br>🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
+    info.innerHTML = `📍 <b>${withCoords.length}</b> stops on map${missing.length?` · <span style="color:var(--red)">${missing.length} missing coords</span> (re-save address to fix)`:''}
+      &nbsp;·&nbsp; 🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
+    if(routeStops.length){currentStopIdx=0;showStop(0);}
   } else {
     info.classList.remove('show');
+    hideStopCard();
   }
 }
+
+// ── STOP CARD ─────────────────────────────────────────────────────────────────
+function showStop(idx){
+  if(!routeStops.length)return;
+  currentStopIdx=Math.max(0,Math.min(idx,routeStops.length-1));
+  const c=routeStops[currentStopIdx];
+
+  // highlight marker
+  mapMarkers.forEach((m,i)=>{
+    const isActive = routeStops[currentStopIdx]?.id===m.id;
+    const bgColor = isOverdue(routeStops.find(s=>s.id===m.id)||{})?'#dc2626':
+      (routeStops.find(s=>s.id===m.id)||{}).paid?'#16a34a':'#0ea5e9';
+    const activeBg = isActive?'#7c3aed':bgColor;
+    const num = routeStops.findIndex(s=>s.id===m.id)+1;
+    m.marker.setIcon(L.divIcon({
+      className:'',
+      html:`<div class="leaflet-marker-num${isActive?' active-stop':''}" style="background:${activeBg}">${num}</div>`,
+      iconSize:[30,30],iconAnchor:[15,15]
+    }));
+  });
+
+  // pan map to stop if it has coords
+  if(c.lat&&c.lng) mapInstance.panTo([c.lat,c.lng],{animate:true});
+
+  document.getElementById('stop-counter').textContent=`Stop ${currentStopIdx+1} of ${routeStops.length}`;
+  document.getElementById('stop-name').textContent=c.name;
+  document.getElementById('stop-addr').textContent=c.addr||'No address saved';
+
+  const tags=[];
+  if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
+  if(c.paid) tags.push(`<span class="badge badge-green">✓ Paid £${c.price}</span>`);
+  else tags.push(`<span class="badge badge-red">Unpaid £${c.price}</span>`);
+  if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
+  if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
+  if(c.notes) tags.push(`<span class="badge badge-amber">⚠️ ${esc(c.notes)}</span>`);
+  if(c.directions) tags.push(`<span class="badge badge-gray">📍 ${esc(c.directions)}</span>`);
+  document.getElementById('stop-tags').innerHTML=tags.join('');
+
+  const waNum=c.whatsapp||c.phone;
+  const actions=[];
+  if(c.phone) actions.push(`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`);
+  if(waNum) actions.push(`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}" class="btn btn-sm btn-green">💬 WhatsApp</a>`);
+  if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">🗺️ Navigate</a>`);
+  actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
+  document.getElementById('stop-actions').innerHTML=actions.join('');
+
+  const card=document.getElementById('stop-card');
+  card.style.display='block';
+  requestAnimationFrame(()=>card.classList.add('show'));
+}
+
+function hideStopCard(){
+  const card=document.getElementById('stop-card');
+  card.classList.remove('show');
+  setTimeout(()=>{card.style.display='none';},310);
+}
+function prevStop(){if(currentStopIdx>0)showStop(currentStopIdx-1);}
+function nextStop(){if(currentStopIdx<routeStops.length-1)showStop(currentStopIdx+1);}
 
 function setMapRoute(r,btn){
   mapRouteFilter=r;
@@ -890,6 +988,19 @@ function clearRouteMode(){
   mapRouteFilter='';
   document.querySelectorAll('#map-filter-row .chip').forEach((c,i)=>{c.classList.toggle('active',i===0);});
   addMapMarkers();
+}
+
+function locateMe(){
+  if(!navigator.geolocation){showToast('GPS not available');return;}
+  const btn=document.getElementById('locate-btn');
+  btn.textContent='⏳';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    btn.textContent='📍';
+    const {latitude:lat,longitude:lng}=pos.coords;
+    mapInstance.setView([lat,lng],14);
+    L.circleMarker([lat,lng],{radius:8,color:'#fff',weight:2,fillColor:'#0ea5e9',fillOpacity:1}).addTo(mapInstance)
+      .bindPopup('You are here').openPopup();
+  },()=>{btn.textContent='📍';showToast('Could not get location');});
 }
 
 function navigateRoute(){

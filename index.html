@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Window Rounds">
+<meta name="theme-color" content="#0ea5e9">
+<link rel="manifest" href="manifest.json">
+<title>Window Rounds</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#0ea5e9;--blue-dark:#0284c7;--blue-light:#e0f2fe;
+  --green:#16a34a;--green-light:#dcfce7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --amber:#d97706;--amber-light:#fef3c7;
+  --gray:#6b7280;--gray-light:#f3f4f6;--gray-border:#e5e7eb;
+  --text:#111827;--text-muted:#6b7280;
+  --white:#ffffff;--bg:#f9fafb;
+  --radius:12px;--radius-sm:8px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.5;overscroll-behavior:none}
+
+/* Login */
+#login-screen{display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0ea5e9 0%,#0284c7 100%);flex-direction:column;align-items:center;justify-content:center;padding:32px;z-index:999}
+#login-screen.show{display:flex}
+.login-box{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.login-logo{font-size:52px;text-align:center;margin-bottom:8px}
+.login-title{font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:24px}
+#login-error{color:var(--red);font-size:13px;margin-bottom:10px;display:none;background:var(--red-light);padding:8px 12px;border-radius:var(--radius-sm)}
+
+/* Loading */
+#loading-screen{display:none;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;z-index:998;gap:12px}
+#loading-screen.show{display:flex}
+.spinner{width:36px;height:36px;border:3px solid var(--gray-border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* App */
+#app{display:none;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:var(--white)}
+#app.show{display:flex}
+
+/* Header */
+.header{background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);color:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.header-title{font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.header-sub{font-size:12px;opacity:0.85;margin-top:1px}
+.header-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.header-week{background:rgba(255,255,255,0.25);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;letter-spacing:0.02em;white-space:nowrap}
+
+/* Today banner */
+.today-banner{background:var(--blue-light);border-bottom:1px solid #bae6fd;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.today-banner-left{font-size:13px;color:var(--blue-dark);font-weight:600}
+.today-banner-right{font-size:12px;color:var(--blue-dark);opacity:0.8}
+
+/* Nav */
+.nav{display:flex;background:var(--white);border-top:1px solid var(--gray-border);flex-shrink:0;padding-bottom:var(--safe-bottom);position:sticky;bottom:0;z-index:50}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border:none;background:none;color:var(--text-muted);font-size:9px;cursor:pointer;transition:color .15s}
+.nav-btn.active{color:var(--blue)}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+
+/* Content */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tab{display:none;padding:16px}
+.tab.active{display:block}
+
+/* Metrics */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.metric{background:var(--gray-light);border-radius:var(--radius-sm);padding:12px}
+.metric-label{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+.metric-value{font-size:26px;font-weight:700;margin-top:2px;line-height:1}
+.metric-value.green{color:var(--green)}
+.metric-value.red{color:var(--red)}
+.metric-value.blue{color:var(--blue)}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:10px 12px 10px 36px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;background:var(--white);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--blue)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;height:18px}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--gray-border);background:var(--white);font-size:13px;white-space:nowrap;cursor:pointer;color:var(--text-muted);flex-shrink:0}
+.chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Cards */
+.customer-card{background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:13px;margin-bottom:10px}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-name{font-weight:600;font-size:15px}
+.card-addr{font-size:13px;color:var(--text-muted);margin-top:2px}
+.card-note{font-size:12px;color:var(--amber);margin-top:3px;font-style:italic}
+.card-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue-dark)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-gray{background:var(--gray-light);color:var(--gray)}
+.card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--gray-border);background:var(--white);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none}
+.btn:active{opacity:0.7}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-green{background:var(--green-light);color:var(--green);border-color:transparent}
+.btn-red{background:var(--red-light);color:var(--red);border-color:transparent}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+.btn-icon{padding:7px;border-radius:var(--radius-sm)}
+
+/* Section */
+.section-head{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;margin-top:4px}
+
+/* Route */
+.route-section{margin-bottom:18px}
+.route-title{font-size:16px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.route-count{font-size:13px;font-weight:400;color:var(--text-muted)}
+.route-item{padding:11px 0;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.route-item:last-child{border-bottom:none}
+.route-item-info{flex:1;min-width:0}
+.route-item-name{font-weight:600;font-size:14px}
+.route-item-addr{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-item-note{font-size:11px;color:var(--amber);font-style:italic}
+.route-item-actions{display:flex;gap:5px;flex-shrink:0}
+
+/* Week tabs */
+.week-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.week-tabs::-webkit-scrollbar{display:none}
+
+/* Notify */
+.notify-select{width:100%;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;background:var(--white);color:var(--text);margin-bottom:10px;outline:none}
+.notify-select:focus{border-color:var(--blue)}
+.notify-msg-box{background:#f0fdf4;border-left:3px solid var(--green);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px;font-size:14px;line-height:1.6;margin:10px 0;color:#15803d}
+.notify-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* History */
+.history-month{margin-bottom:20px}
+.history-month-header{background:var(--blue-light);color:var(--blue-dark);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.history-month-name{font-weight:700;font-size:15px}
+.history-month-stats{font-size:13px;font-weight:600}
+.history-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-border);font-size:14px}
+.history-row:last-child{border-bottom:none}
+.history-name{font-weight:500}
+.history-meta{font-size:12px;color:var(--text-muted)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radius) var(--radius) 0 0;padding:20px 16px;padding-bottom:calc(20px + var(--safe-bottom));width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--gray-border);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;background:var(--white);color:var(--text);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{min-height:70px;resize:none}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(70px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .25s;z-index:200;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(74px + var(--safe-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;border:none;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(14,165,233,0.4);z-index:40}
+.fab:active{transform:scale(0.95)}
+
+/* Empty */
+.empty{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-icon{font-size:40px;margin-bottom:8px}
+
+/* Divider */
+.divider{height:1px;background:var(--gray-border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="show">
+  <div class="login-box">
+    <div class="login-logo">🪣</div>
+    <div class="login-title">Window Rounds</div>
+    <div class="login-sub">Sign in to manage your round</div>
+    <div id="login-error"></div>
+    <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <button class="btn btn-blue btn-full" onclick="login()" style="font-size:15px;padding:12px;margin-top:4px">Sign In</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="color:var(--text-muted);font-size:14px">Loading your customers…</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="header-title">🪣 Window Rounds</div>
+      <div class="header-sub" id="header-sub">Loading…</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <span class="header-week" id="header-week"></span>
+      <button class="header-btn" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+  <div class="today-banner">
+    <div class="today-banner-left" id="today-date"></div>
+    <div class="today-banner-right" id="today-routes"></div>
+  </div>
+
+  <div class="content">
+    <!-- CUSTOMERS -->
+    <div class="tab active" id="tab-customers">
+      <div class="metrics" id="metrics"></div>
+      <div class="search-wrap">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" id="search" placeholder="Search name or address…" oninput="renderCustomers()">
+      </div>
+      <div class="filter-row" id="route-chips"></div>
+      <div id="customers-list"></div>
+    </div>
+
+    <!-- ROUTES -->
+    <div class="tab" id="tab-routes">
+      <div class="week-tabs" id="week-tabs"></div>
+      <div id="routes-list"></div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="tab" id="tab-payments">
+      <div class="metrics" id="pay-metrics"></div>
+      <div class="search-wrap">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" id="pay-search" placeholder="Search…" oninput="renderPayments()">
+      </div>
+      <div class="filter-row">
+        <button class="chip active" onclick="setPayFilter('',this)">All</button>
+        <button class="chip" onclick="setPayFilter('unpaid',this)">Unpaid</button>
+        <button class="chip" onclick="setPayFilter('paid',this)">Paid</button>
+      </div>
+      <div id="payments-list"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="tab" id="tab-history">
+      <div class="metrics" id="hist-metrics"></div>
+      <div class="filter-row" id="hist-year-tabs"></div>
+      <div id="history-list"><div class="empty"><div class="empty-icon">📋</div>No history yet — mark jobs as done to start tracking</div></div>
+    </div>
+
+    <!-- NOTIFY -->
+    <div class="tab" id="tab-notify">
+      <div class="section-head">Single customer</div>
+      <select class="notify-select" id="notify-customer" onchange="updateNotify()">
+        <option value="">Choose a customer…</option>
+      </select>
+      <select class="notify-select" id="notify-type" onchange="updateNotify()">
+        <option value="before">Night before reminder</option>
+        <option value="after">Job complete</option>
+        <option value="payment">Payment reminder</option>
+      </select>
+      <div id="notify-out"></div>
+      <div class="divider"></div>
+      <div class="section-head">Whole route</div>
+      <select class="notify-select" id="bulk-route" onchange="updateBulk()">
+        <option value="">Choose a route…</option>
+      </select>
+      <select class="notify-select" id="bulk-type" onchange="updateBulk()">
+        <option value="before">Night before reminder</option>
+        <option value="after">Job complete</option>
+        <option value="payment">Payment reminder</option>
+      </select>
+      <div id="bulk-out"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('customers',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+      Customers
+    </button>
+    <button class="nav-btn" onclick="showTab('routes',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      Routes
+    </button>
+    <button class="nav-btn" onclick="showTab('payments',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Payments
+    </button>
+    <button class="nav-btn" onclick="showTab('history',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      History
+    </button>
+    <button class="nav-btn" onclick="showTab('notify',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+      Notify
+    </button>
+  </nav>
+</div>
+
+<button class="fab" onclick="openAddModal()" aria-label="Add customer">+</button>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Add customer</div>
+    <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Customer name"></div>
+    <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode"></div>
+    <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44…"></div>
+    <div class="field"><label>Route</label>
+      <select id="f-route">
+        <option>Keady / Derrynoose</option><option>Armagh</option><option>Clady</option>
+        <option>Kileavy / Dromintee</option><option>Camlough / Bessbrook</option>
+        <option>Newtown</option><option>Cullyhannah</option><option>Crossmaglen</option>
+        <option>Newry</option><option>Forkhill / Mullaghawn</option><option>Poyntzpass / Jerrettspass</option>
+      </select>
+    </div>
+    <div class="field"><label>Frequency</label>
+      <select id="f-freq"><option value="monthly">Monthly</option><option value="2months">Every 2 months</option></select>
+    </div>
+    <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="numeric"></div>
+    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Access notes, special instructions…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-blue" id="save-btn" onclick="saveCustomer()">Save</button>
+    </div>
+    <div id="delete-wrap" style="margin-top:10px;display:none">
+      <button class="btn btn-full" style="color:var(--red);border-color:var(--red-light)" onclick="deleteCustomer()">Delete customer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+// ── CONFIG — paste your Supabase values here ──────────────────────────────────
+const SUPABASE_URL  = 'https://xkcottkbmjlvqempqlsx.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_OKoXX-AnIf1ci3yfzwg7DQ_Pygnu4rk';
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── SEED DATA (your existing 143 customers) ───────────────────────────────────
+const SEED = [
+  {name:"Paula Beggan",addr:"Keady",phone:"+447493204539",route:"Keady / Derrynoose",freq:"monthly",price:25,paid:false,last_cleaned:"",notes:""},
+  {name:"Suzanne McKeever",addr:"2 The Oaks Derrynoose",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Maggie",addr:"34 Crossmore Green Keady BT60 3TR",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sarah McQuillan",addr:"6 Crossmore Green Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Mairead Duffy",addr:"29 Mountview Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Fiona Harte",addr:"12 St Matthews Est Keady BT60 3SF",phone:"+447849586933",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Eilish McCaffrey",addr:"17 Annvale Road Keady BT60 2SA",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Claire McKinney",addr:"40 St Matthews Estate Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Lorraine Kirk",addr:"8 Richview Heights BT60 3SW",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Margaret",addr:"27 Caramoyle Keady BT60 2RN",phone:"+447746571582",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Tina Maguire",addr:"62 Drumgreenagh Road Madden BT60 3LU",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Patricia Carr",addr:"200 Dundrum Road Tasagh BT60 2NQ",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Karen",addr:"134B Granemore Road",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Chloe Rice",addr:"15 Main Street Darkley BT60 3BB",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Aoife",addr:"",phone:"+447526203812",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Armagh Tuition",addr:"Millview House 55 Dundrum Road Tassagh BT60 2PZ",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Ailish",addr:"15 Lower Darkley Road Tassagh BT60 2PD",phone:"+447720889994",route:"Keady / Derrynoose",freq:"monthly",price:30,paid:false,last_cleaned:"",notes:""},
+  {name:"Brenda",addr:"189 Dundrum Road Tassagh BT60 2NQ",phone:"+447713676705",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Bungalows"},
+  {name:"Sandra Sloan",addr:"37 Foley Road Tassagh BT60 2QX",phone:"07734264896",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Edell McKee",addr:"157 Coolmillish Road Mowhan BT60 2EY",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Catherine",addr:"134 Coolmillish Rd BT60 2EY",phone:"+447703739740",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Maria McGreevy",addr:"7 Rosemount Avenue BT60 1BB",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Zoe Donnelly",addr:"8 Greenfield Park",phone:"+447716539244",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Jacqueline Mackle",addr:"",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Mackles Icecream Monaghan",addr:"",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"All windows around back + drive through window"},
+  {name:"Laura Mone",addr:"2 Killuney Meadows Armagh BT61 9HZ",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Kathleen Fields",addr:"58 Castle Street Armagh BT61 7EF",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Brenda Black",addr:"56 Castle Street Armagh BT61 7EF",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Blathnaid Woods",addr:"61 Monaghan Road BT60 4DR",phone:"07753477780",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Margot",addr:"Salters Grange No 1 BT61 8DZ",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Denise Watt",addr:"28 Linseys Heights Armagh BT61 9HB",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Jenna Goll",addr:"15 Ardmore Road Armagh BT60 1AH",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Thomas O'Hanlon",addr:"6 Carraigh Dua Belleek",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Donna (Ma)",addr:"43 Doyles Villas",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Code Clothing",addr:"Beside Camocha",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Donna McNeil",addr:"Beside dog groomer Camlough",phone:"+447850551812",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Chloe Morgan",addr:"14 Dobsons Way Bessbrook BT35 7FH",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Travel Writer",addr:"2 Brookview Close",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Tanya Payne",addr:"76 John F Kennedy BT35 7EW",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Fiona Trainor",addr:"72 The Gardens Bessbrook",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Horse Woman",addr:"26 Carrickcloghan Hill Camlough BT35 7HH",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Patricia Fegan",addr:"22B Carrivekeeney Road BT35 7LU",phone:"+447872911181",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Angela Loughan",addr:"17 Tamnaghbane Road Kileavey BT35 8RF",phone:"+447934628252",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Pauline",addr:"4 Gordons Lane Camlough BT35 7LA",phone:"+447732568596",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Fiona Crozier",addr:"27 Derrywilligan Road Bessbrook",phone:"+447547889797",route:"Camlough / Bessbrook",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Edyta",addr:"3 Cloughan Court Camlough BT35 7NJ",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Lesa Morrow",addr:"55 Fountain Street",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Abby McGrath",addr:"41 Acorn Hill BT35 7BY",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Aimee McArdle",addr:"15 Gortcille Cladymore Road BT60 2FF",phone:"",route:"Clady",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Lee Harold",addr:"2 Gortcille Cladymore",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Maveen Brown",addr:"31 Tullywill Road Cladybeg BT60 2HQ",phone:"+447739359888",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Malachy Savage",addr:"5 Gortcille Cladymore (green door)",phone:"+447745662473",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Wee Man",addr:"1 Parkview Close BT35 8GF",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Karrie Byrne",addr:"3 Francis Jordan BT35 8HS",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Ashling Carragher",addr:"4A Savers Road BT35 8NA",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sarah Higgins",addr:"7B Station Road BT35 8OH",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Caravan Site",addr:"115 Concession Road Culloville",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sheila Carragher's Ma",addr:"37 Malachy Conlon Park Culloville BT35 9AN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Fionnuala",addr:"A75VF83",phone:"+447770366575",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Nicole King",addr:"117 Concession Road",phone:"+353860339033",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Wipe sills after"},
+  {name:"Margaret McCarthy",addr:"64 Concession Road",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Siobhan Mone",addr:"17A Lisseraw Road",phone:"+447577359934",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Steven Rushe",addr:"17 Rathview Park BT35 9HJ",phone:"+353877839315",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Jacqueline Marron",addr:"9 Rathkeelan Park BT35 9TN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Olaoghog Clo",addr:"1 Chapel View",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Do skylight, careful with vents"},
+  {name:"Daniela",addr:"87 Ard Ross BT35 9BZ",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sarah Shields",addr:"70 Rathkeelan Park Crossmaglen BT35 9TN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Tina McKeown",addr:"5 Creenkil Road Crossmaglen BT35 9AJ",phone:"",route:"Crossmaglen",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Breige",addr:"5A Drumill Road BT35 9LA",phone:"+353864141997",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sheila Carragher",addr:"59 Annaghmare Road Crossmaglen BT35 9BG",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Rois Rois",addr:"31 Lismore Crossmaglen BT35 9ET",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Sinead Nugent",addr:"4A Art McCooey Park BT35 9DZ",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sabrina McKeever",addr:"27 Urchill Creggan",phone:"+447513759244",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Lina",addr:"13 Urchill Creggan",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Orla",addr:"3 Ard Carraig",phone:"+353872816704",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Noreen McCreesh",addr:"11 McKinley Park BT35 0PS",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Debbie Donaldson",addr:"9 Ballyfannahan Road BT35 0LY",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Kayleigh Hughes",addr:"17 Cherry Grove Cullyhannah BT35 0RW",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok - do shed also"},
+  {name:"Cakesbykhaz",addr:"2A New Road BT35 9PG",phone:"07756388572",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Noelle",addr:"16 Legmoylin Road BT35 9LL Silverbridge",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - pin drop in insta"},
+  {name:"Antoinette",addr:"17B Bonds Road Silverbridge BT35 9PE",phone:"07824980886",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram"},
+  {name:"Angela Crilly",addr:"3 Fairview Park BT35 9SP",phone:"+447388456820",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Deirdre Graham",addr:"BT35 9SX",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Fionnuala McAnulty",addr:"7 Shean Road Forkhill BT35 9SY",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Patrick Campbell",addr:"11 Tullymacrieve Road BT35 9RD",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Ciaran Gollogly",addr:"4 Tullymacrieve Road",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Keith McConnon",addr:"A91X3K4",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Border Boutique",addr:"A91PKE3",phone:"",route:"Forkhill / Mullaghawn",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Darren Beattie",addr:"",phone:"",route:"Forkhill / Mullaghawn",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Ann McElroy",addr:"",phone:"+447974954491",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Melissa McReesh",addr:"28 Newry Road Tievecrom",phone:"",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - will need directions"},
+  {name:"Amanda Cosmetics",addr:"16A Aghadavoyle Road BT35 8JJ",phone:"07483445694",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - ring first, dogs at back"},
+  {name:"Tracey Hollywood",addr:"29 Bearna Park BT35 8TP",phone:"07719104799",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Stephanie Rafferty",addr:"16 Culan Close",phone:"+447516843056",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"James Magee",addr:"14A Windsor Avenue BT34 1EG",phone:"",route:"Newry",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Heather",addr:"68 Drumgullion Ave Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sine",addr:"4 Meadowbrook Park",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Colin McKnight",addr:"149 Belfast Road Newry BT34 1QX",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Victoria",addr:"8 Shepherds Close BT35 6FD",phone:"+447727309074",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Karan",addr:"30 Canal Street BT35 6JB",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Shirley Smith",addr:"51 Church Street",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Saulena",addr:"52 Dominic Street BT35 8BW",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Debbie",addr:"19 Turmore Road Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Kerry Stuart",addr:"22 Ardgreen Drive BT35 8EY",phone:"07731569705",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Mary McMahon",addr:"",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Pamela Flynn",addr:"252 Craigmore View BT35 6GH",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Margretta",addr:"7 Aileen Terrace BT35 8DU",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Moira Cruz",addr:"13 Aileen Terrace Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Lorna Sarah",addr:"9 Fern Court Monkshill Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sarah Wedding Singer",addr:"7 Shinn Road BT34 1PA",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Elizabeth",addr:"11 Laurel Grove BT34 1TP",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+  {name:"Megan",addr:"89 Ardfreelin BT34 1JG",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"WhatsApp"},
+  {name:"Linda",addr:"4A Forthill Road Crieve Newry BT34 2LP",phone:"07928106391",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Michelle Finnegan",addr:"69 Carrickgallogly Road BT60 2JS",phone:"07951457809",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Martina McVerry",addr:"7 Cluster Road BT35 0AR",phone:"",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Stephen Kennedy",addr:"23 Whiterock Road BT35 0AN",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Leanne Fin",addr:"7 Ballymoyer Weir BT60 2FP",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Nathan Vallely",addr:"A29 Service Station",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Do shop and barbers"},
+  {name:"Terry Googly",addr:"1 Viewpoint Road Newtownhamilton",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Paddy McGrory",addr:"3 School Meadows",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"James McGrory",addr:"12 School Meadows",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Andrea Salon",addr:"Beauty salon in Newtown",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Raimonda",addr:"15 Ballymoyer Road BT35 0AJ",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook"},
+  {name:"Ciara Davidson",addr:"5 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Tasha Connolly",addr:"7 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Vitalijus",addr:"11 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Stephanie Connolly",addr:"12 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Anne Maria",addr:"22 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Irene Mullen",addr:"34 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Nichola Connolly",addr:"37 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Lauren Hollywood",addr:"35 Meadowvale",phone:"",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Evelina",addr:"31 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Concepta",addr:"14 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Lorraine Gib",addr:"10 Lirgrove",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Rosie Dog",addr:"12 Lirgrove Newtownhamilton",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Camera watching - heads up"},
+  {name:"Kevin Gallogly",addr:"21 Dungormley Estate",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Denise Henry",addr:"43 Barkers Road BT35 0PQ",phone:"+447749038105",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Donna",addr:"4 Glassdrumman Road BT35 6SZ",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sussie",addr:"22 Acton Road Poyntzpass BT35 6TB",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Nicola",addr:"BT34 1TE Jerrettspass",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Sarah McGivern",addr:"16A Knockduff Road Jerrettspass BT35 6LU",phone:"07545062208",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"Nicole Aesthetic Nurse",addr:"10 Mossview Road Poyntzpass BT35 6RR",phone:"07526247069",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:""},
+  {name:"JP Transport",addr:"43A Legananny Road Loughbrickland BT32 3QR",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok"},
+];
+
+const ROUTES = ["Keady / Derrynoose","Armagh","Clady","Kileavy / Dromintee","Camlough / Bessbrook","Newtown","Cullyhannah","Crossmaglen","Newry","Forkhill / Mullaghawn","Poyntzpass / Jerrettspass"];
+const WEEKS = {
+  "Week 1":["Keady / Derrynoose","Armagh","Clady","Kileavy / Dromintee"],
+  "Week 2":["Camlough / Bessbrook","Newtown"],
+  "Week 3":["Cullyhannah","Crossmaglen","Newry"],
+  "Week 4":["Newry","Forkhill / Mullaghawn","Poyntzpass / Jerrettspass","Keady / Derrynoose"]
+};
+
+function getCurrentWeek(){
+  const day = new Date().getDate();
+  if(day <= 7)  return 'Week 1';
+  if(day <= 14) return 'Week 2';
+  if(day <= 21) return 'Week 3';
+  return 'Week 4';
+}
+
+function initBanner(){
+  const now = new Date();
+  const weekName = getCurrentWeek();
+  const dateStr = now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const routes = WEEKS[weekName];
+  document.getElementById('today-date').textContent = '📅 ' + dateStr;
+  document.getElementById('today-routes').textContent = weekName + ' · ' + routes.slice(0,2).join(', ') + (routes.length > 2 ? '…' : '');
+  document.getElementById('header-week').textContent = weekName;
+  activeWeek = weekName;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let customers = [];
+let activeTab = 'customers';
+let activeWeek = 'Week 1';
+let activeRouteFilter = '';
+let payFilter = '';
+let editingId = null;
+let histYear = new Date().getFullYear();
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function login(){
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  if(!email||!pwd){ errEl.textContent='Please enter email and password'; errEl.style.display='block'; return; }
+  const { error } = await db.auth.signInWithPassword({ email, password: pwd });
+  if(error){ errEl.textContent = error.message; errEl.style.display='block'; }
+}
+
+async function logout(){
+  if(!confirm('Sign out?')) return;
+  await db.auth.signOut();
+}
+
+function showLogin(){
+  document.getElementById('login-screen').classList.add('show');
+  document.getElementById('loading-screen').classList.remove('show');
+  document.getElementById('app').classList.remove('show');
+}
+
+function showLoading(){
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('loading-screen').classList.add('show');
+  document.getElementById('app').classList.remove('show');
+}
+
+function showApp(){
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('loading-screen').classList.remove('show');
+  document.getElementById('app').classList.add('show');
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+async function loadCustomers(){
+  showLoading();
+  const { data, error } = await db.from('customers').select('*').order('name');
+  if(error){ showToast('Error loading data'); showApp(); return; }
+  if(data.length === 0){
+    await db.from('customers').insert(SEED);
+    const { data: seeded } = await db.from('customers').select('*').order('name');
+    customers = seeded || [];
+  } else {
+    customers = data;
+  }
+  showApp();
+  initBanner();
+  initChips();
+  renderMetrics();
+  renderCustomers();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(t, btn){
+  activeTab = t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(btn) btn.classList.add('active');
+  document.querySelector('.fab').style.display = t==='customers'?'flex':'none';
+  if(t==='customers'){ renderMetrics(); renderCustomers(); }
+  if(t==='routes'){ renderWeekTabs(); renderRoutes(); }
+  if(t==='payments'){ renderPayMetrics(); renderPayments(); }
+  if(t==='history'){ renderHistory(); }
+  if(t==='notify'){ renderNotifySelects(); }
+}
+
+// ── METRICS ───────────────────────────────────────────────────────────────────
+function renderMetrics(){
+  const total=customers.length, unpaid=customers.filter(c=>!c.paid).length;
+  const monthly=customers.filter(c=>c.freq==='monthly').length;
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
+    <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value red">${unpaid}</div></div>
+    <div class="metric"><div class="metric-label">Monthly</div><div class="metric-value">${monthly}</div></div>
+    <div class="metric"><div class="metric-label">Routes</div><div class="metric-value">${ROUTES.length}</div></div>`;
+  document.getElementById('header-sub').textContent=`${total} customers · ${unpaid} unpaid`;
+}
+
+// ── ROUTE CHIPS ───────────────────────────────────────────────────────────────
+function initChips(){
+  const el=document.getElementById('route-chips');
+  el.innerHTML='<button class="chip active" onclick="setRoute(\'\',this)">All</button>'+
+    ROUTES.map(r=>`<button class="chip" onclick="setRoute('${r.replace(/'/g,"\\'")}',this)">${r}</button>`).join('');
+}
+
+function setRoute(r,btn){
+  activeRouteFilter=r;
+  document.querySelectorAll('#route-chips .chip').forEach(c=>c.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderCustomers();
+}
+
+// ── CUSTOMERS ─────────────────────────────────────────────────────────────────
+function renderCustomers(){
+  const q=document.getElementById('search').value.toLowerCase();
+  let list=customers.filter(c=>{
+    const mq=!q||c.name.toLowerCase().includes(q)||(c.addr||'').toLowerCase().includes(q);
+    const mr=!activeRouteFilter||c.route===activeRouteFilter;
+    return mq&&mr;
+  });
+  const el=document.getElementById('customers-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>No customers found</div>';return;}
+  el.innerHTML=list.map(c=>`
+    <div class="customer-card">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${esc(c.name)}</div>
+          <div class="card-addr">${esc(c.addr||'No address saved')}</div>
+          ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
+        </div>
+        <button class="btn btn-icon" onclick="openEditModal(${c.id})">✏️</button>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-blue">${esc(c.route)}</span>
+        <span class="badge ${c.freq==='monthly'?'badge-blue':'badge-amber'}">${c.freq==='monthly'?'Monthly':'Every 2 months'}</span>
+        <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
+          <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
+        </button>
+      </div>
+      <div class="card-actions">
+        ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
+        ${c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">💬 Remind</a>`:''}
+        ${c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm">✅ Done</a>`:''}
+        ${c.phone&&!c.paid?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-red">💰 Pay</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function togglePaid(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c) return;
+  c.paid=!c.paid;
+  await db.from('customers').update({paid:c.paid}).eq('id',id);
+  renderCustomers(); renderMetrics();
+  showToast(c.paid?'Marked as paid':'Marked as unpaid');
+}
+
+// ── ROUTES ────────────────────────────────────────────────────────────────────
+function renderWeekTabs(){
+  document.getElementById('week-tabs').innerHTML=Object.keys(WEEKS).map(w=>
+    `<button class="chip ${w===activeWeek?'active':''}" onclick="setWeek('${w}')">${w}</button>`).join('');
+}
+
+function setWeek(w){ activeWeek=w; renderWeekTabs(); renderRoutes(); }
+
+function renderRoutes(){
+  const routeNames=WEEKS[activeWeek]||[];
+  document.getElementById('routes-list').innerHTML=routeNames.map(r=>{
+    const list=customers.filter(c=>c.route===r);
+    const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
+    const total=list.reduce((s,c)=>s+Number(c.price),0);
+    return `<div class="route-section">
+      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length}) · £${earned}/£${total}</span></div>
+      <div style="margin-top:8px;background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
+        ${list.map(c=>`<div class="route-item">
+          <div class="route-item-info">
+            <div class="route-item-name">${esc(c.name)}</div>
+            <div class="route-item-addr">${esc(c.addr||'No address')}</div>
+            ${c.notes?`<div class="route-item-note">${esc(c.notes)}</div>`:''}
+          </div>
+          <div class="route-item-actions">
+            ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">📞</a>`:''}
+            <button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">£${c.price}${c.paid?' ✓':''}</button>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function togglePaidRoute(id,btn){
+  const c=customers.find(x=>x.id===id);
+  if(!c) return;
+  c.paid=!c.paid;
+  await db.from('customers').update({paid:c.paid}).eq('id',id);
+  btn.textContent=`£${c.price}${c.paid?' ✓':''}`;
+  btn.classList.toggle('btn-green',c.paid);
+  showToast(c.paid?'Marked as paid':'Marked as unpaid');
+}
+
+// ── PAYMENTS ──────────────────────────────────────────────────────────────────
+function renderPayMetrics(){
+  const paid=customers.filter(c=>c.paid), unpaid=customers.filter(c=>!c.paid);
+  const col=paid.reduce((s,c)=>s+Number(c.price),0), owed=unpaid.reduce((s,c)=>s+Number(c.price),0);
+  document.getElementById('pay-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${col}</div></div>
+    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>
+    <div class="metric"><div class="metric-label">Paid</div><div class="metric-value">${paid.length}</div></div>
+    <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value">${unpaid.length}</div></div>`;
+}
+
+function setPayFilter(f,btn){
+  payFilter=f;
+  document.querySelectorAll('#tab-payments .chip').forEach(c=>c.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderPayments();
+}
+
+function renderPayments(){
+  const q=document.getElementById('pay-search').value.toLowerCase();
+  let list=customers.filter(c=>{
+    const mq=!q||c.name.toLowerCase().includes(q)||c.route.toLowerCase().includes(q);
+    const mp=!payFilter||(payFilter==='paid'&&c.paid)||(payFilter==='unpaid'&&!c.paid);
+    return mq&&mp;
+  });
+  document.getElementById('payments-list').innerHTML=list.map(c=>`
+    <div class="customer-card">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${esc(c.name)}</div>
+          <div class="card-addr">${esc(c.route)}</div>
+          ${c.last_cleaned?`<div style="font-size:12px;color:var(--text-muted)">Last done: ${c.last_cleaned}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700">£${c.price}</div>
+          <button onclick="togglePaidPay(${c.id})" style="background:none;border:none;cursor:pointer">
+            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'✓ Paid':'Unpaid'}</span>
+          </button>
+        </div>
+      </div>
+      <div class="card-actions" style="margin-top:8px">
+        <button class="btn btn-sm btn-green" onclick="markDone(${c.id})">✅ Mark done today</button>
+        ${c.phone&&!c.paid?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-red">💰 Request pay</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function togglePaidPay(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c) return;
+  c.paid=!c.paid;
+  await db.from('customers').update({paid:c.paid}).eq('id',id);
+  renderPayMetrics(); renderPayments();
+  showToast(c.paid?'Marked as paid':'Marked as unpaid');
+}
+
+async function markDone(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c) return;
+  const today=new Date().toLocaleDateString('en-GB');
+  const isoDate=new Date().toISOString().split('T')[0];
+  await db.from('cleaning_history').insert({customer_id:id, cleaned_date:isoDate, price:c.price, paid:false});
+  c.last_cleaned=today; c.paid=false;
+  await db.from('customers').update({last_cleaned:today, paid:false}).eq('id',id);
+  renderPayments();
+  showToast('Job logged — payment reset');
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+async function renderHistory(){
+  const { data:history } = await db
+    .from('cleaning_history')
+    .select('*, customers(name,route)')
+    .gte('cleaned_date', `${histYear}-01-01`)
+    .lte('cleaned_date', `${histYear}-12-31`)
+    .order('cleaned_date',{ascending:false});
+
+  if(!history||!history.length){
+    document.getElementById('history-list').innerHTML='<div class="empty"><div class="empty-icon">📋</div>No history for '+histYear+'</div>';
+    renderHistMetrics([]); renderHistYearTabs(); return;
+  }
+
+  renderHistMetrics(history);
+  renderHistYearTabs();
+
+  const byMonth={};
+  history.forEach(h=>{
+    const d=new Date(h.cleaned_date);
+    const key=d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    if(!byMonth[key]) byMonth[key]=[];
+    byMonth[key].push(h);
+  });
+
+  document.getElementById('history-list').innerHTML=Object.entries(byMonth).map(([month,jobs])=>{
+    const earned=jobs.reduce((s,j)=>s+Number(j.price||0),0);
+    return `<div class="history-month">
+      <div class="history-month-header">
+        <div class="history-month-name">${month}</div>
+        <div class="history-month-stats">£${earned} · ${jobs.length} jobs</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
+        ${jobs.map(j=>`<div class="history-row">
+          <div>
+            <div class="history-name">${esc(j.customers?.name||'Unknown')}</div>
+            <div class="history-meta">${esc(j.customers?.route||'')} · ${new Date(j.cleaned_date).toLocaleDateString('en-GB')}</div>
+          </div>
+          <span class="badge ${j.paid?'badge-green':'badge-amber'}">£${j.price||0}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistMetrics(history){
+  const total=history.reduce((s,h)=>s+Number(h.price||0),0);
+  const jobs=history.length;
+  document.getElementById('hist-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">${histYear} Earnings</div><div class="metric-value green">£${total}</div></div>
+    <div class="metric"><div class="metric-label">Jobs Done</div><div class="metric-value blue">${jobs}</div></div>`;
+}
+
+function renderHistYearTabs(){
+  const thisYear=new Date().getFullYear();
+  const years=[thisYear,thisYear-1];
+  document.getElementById('hist-year-tabs').innerHTML=years.map(y=>
+    `<button class="chip ${y===histYear?'active':''}" onclick="setHistYear(${y})">${y}</button>`).join('');
+}
+
+function setHistYear(y){ histYear=y; renderHistory(); }
+
+// ── NOTIFY ────────────────────────────────────────────────────────────────────
+function getMsg(c,type){
+  const first=c.name.split(' ')[0];
+  if(type==='before') return `Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
+  if(type==='after')  return `Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you. Thanks a million!`;
+  return `Hi ${first}! Hope you're well. Just a wee reminder that £${c.price} is still outstanding for your window cleaning. No rush but whenever you get a chance. Thanks! 🪣`;
+}
+
+function renderNotifySelects(){
+  document.getElementById('notify-customer').innerHTML='<option value="">Choose a customer…</option>'+
+    customers.map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(c.route)}</option>`).join('');
+  document.getElementById('bulk-route').innerHTML='<option value="">Choose a route…</option>'+
+    ROUTES.map(r=>`<option value="${r}">${r}</option>`).join('');
+  updateNotify(); updateBulk();
+}
+
+function updateNotify(){
+  const cid=document.getElementById('notify-customer').value;
+  const type=document.getElementById('notify-type').value;
+  const out=document.getElementById('notify-out');
+  if(!cid){out.innerHTML='';return;}
+  const c=customers.find(x=>x.id==cid);
+  const msg=getMsg(c,type);
+  out.innerHTML=`<div class="notify-msg-box">${esc(msg)}</div>
+    <div class="notify-actions">
+      <button class="btn" onclick="copyText('${encodeURIComponent(msg)}',this)">📋 Copy</button>
+      ${c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(msg)}" class="btn btn-blue">💬 Open in Messages</a>`:'<span style="font-size:13px;color:var(--text-muted)">No phone number saved</span>'}
+    </div>`;
+}
+
+function updateBulk(){
+  const r=document.getElementById('bulk-route').value;
+  const type=document.getElementById('bulk-type').value;
+  const out=document.getElementById('bulk-out');
+  if(!r){out.innerHTML='';return;}
+  const list=customers.filter(c=>c.route===r&&c.phone);
+  if(!list.length){out.innerHTML='<p style="color:var(--text-muted);font-size:13px;margin-top:8px">No customers on this route have phone numbers saved.</p>';return;}
+  out.innerHTML=`<p style="font-size:13px;color:var(--text-muted);margin:8px 0">${list.length} customers with phone numbers:</p>`+
+    list.map(c=>{const msg=getMsg(c,type);return`
+      <div class="customer-card" style="margin-bottom:8px">
+        <div class="card-name" style="margin-bottom:6px">${esc(c.name)}</div>
+        <div class="notify-msg-box" style="font-size:13px">${esc(msg)}</div>
+        <div class="notify-actions" style="margin-top:8px">
+          <button class="btn btn-sm" onclick="copyText('${encodeURIComponent(msg)}',this)">📋 Copy</button>
+          <a href="sms:${esc(c.phone)}?body=${encodeURIComponent(msg)}" class="btn btn-sm btn-blue">💬 SMS</a>
+        </div>
+      </div>`;}).join('');
+}
+
+function copyText(encoded,btn){
+  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(()=>{
+    const orig=btn.textContent; btn.textContent='Copied!';
+    setTimeout(()=>{btn.textContent=orig;},2000);
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openAddModal(){
+  editingId=null;
+  document.getElementById('modal-title').textContent='Add customer';
+  document.getElementById('delete-wrap').style.display='none';
+  ['name','addr','phone','notes'].forEach(f=>document.getElementById('f-'+f).value='');
+  document.getElementById('f-price').value=20;
+  document.getElementById('f-route').selectedIndex=0;
+  document.getElementById('f-freq').selectedIndex=0;
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditModal(id){
+  editingId=id;
+  const c=customers.find(x=>x.id===id);
+  document.getElementById('modal-title').textContent='Edit customer';
+  document.getElementById('delete-wrap').style.display='block';
+  document.getElementById('f-name').value=c.name;
+  document.getElementById('f-addr').value=c.addr||'';
+  document.getElementById('f-phone').value=c.phone||'';
+  document.getElementById('f-route').value=c.route;
+  document.getElementById('f-freq').value=c.freq;
+  document.getElementById('f-price').value=c.price;
+  document.getElementById('f-notes').value=c.notes||'';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+async function saveCustomer(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){alert('Please enter a name');return;}
+  const btn=document.getElementById('save-btn');
+  btn.textContent='Saving…'; btn.disabled=true;
+  const data={name, addr:document.getElementById('f-addr').value.trim(),
+    phone:document.getElementById('f-phone').value.trim(),
+    route:document.getElementById('f-route').value,
+    freq:document.getElementById('f-freq').value,
+    price:parseFloat(document.getElementById('f-price').value)||20,
+    notes:document.getElementById('f-notes').value.trim()};
+  if(editingId){
+    await db.from('customers').update(data).eq('id',editingId);
+    Object.assign(customers.find(x=>x.id===editingId),data);
+  } else {
+    const {data:newC}=await db.from('customers').insert({...data,paid:false,last_cleaned:''}).select().single();
+    if(newC) customers.push(newC);
+  }
+  btn.textContent='Save'; btn.disabled=false;
+  closeModal(); renderMetrics(); renderCustomers();
+  showToast(editingId?'Customer updated':'Customer added');
+}
+
+async function deleteCustomer(){
+  if(!confirm('Delete this customer?')) return;
+  await db.from('customers').delete().eq('id',editingId);
+  customers=customers.filter(x=>x.id!==editingId);
+  closeModal(); renderMetrics(); renderCustomers();
+  showToast('Customer deleted');
+}
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async()=>{
+  try {
+    const { data:{ session } } = await db.auth.getSession();
+    if(session){ await loadCustomers(); }
+    else { showLogin(); }
+    db.auth.onAuthStateChange(async(event,session)=>{
+      if(session){ await loadCustomers(); }
+      else { showLogin(); customers=[]; }
+    });
+  } catch(e) {
+    showLogin();
+    document.getElementById('login-error').textContent='Config error — check your Supabase URL and key';
+    document.getElementById('login-error').style.display='block';
+  }
+})();
+</script>
+</body>
+</html>

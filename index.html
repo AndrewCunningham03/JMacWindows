@@ -743,7 +743,7 @@ async function loadCustomers(){
       // First login — create profile
       await db.from('profiles').insert({id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'});
       // Auto-promote if it's the admin email
-      if(user.email==='andrewcunningham9911@gmail.com'){
+      if(user.email==='andrewcunningham9911@hotmail.com'){
         await db.from('profiles').update({role:'admin'}).eq('id',user.id);
         profile={role:'admin',name:'Andrew'};
       } else {

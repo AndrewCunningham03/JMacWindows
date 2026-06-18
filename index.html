@@ -740,15 +740,10 @@ async function loadCustomers(){
   if(user){
     let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
     if(!profile){
-      // First login — create profile
-      await db.from('profiles').insert({id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'});
-      // Auto-promote if it's the admin email
-      if(user.email==='andrewcunningham9911@hotmail.com'){
-        await db.from('profiles').update({role:'admin'}).eq('id',user.id);
-        profile={role:'admin',name:'Andrew'};
-      } else {
-        profile={role:'employee',name:user.email.split('@')[0]};
-      }
+      // First login — create profile as employee, role set in Supabase dashboard
+      const newProfile={id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'};
+      await db.from('profiles').insert(newProfile);
+      profile=newProfile;
     }
     currentUserRole=profile.role||'employee';
     currentUserName=profile.name||user.email.split('@')[0];

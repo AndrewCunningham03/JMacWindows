@@ -1366,7 +1366,7 @@ function getMsg(c,type){
   const link=getPayLink(c);
   const payLine=link?`\nPay here: ${link}`:``;
   if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows soon. See you then! 🪣`;
-  if(type==='beforeTomorrow')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
+  if(type==='beforeTomorrow')return`Hi! Just a wee reminder from JMac Window Cleaning — we'll be around to clean your windows tomorrow. See you then! 🪣`;
   if(type==='after'){
     if(c.paid)return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Thanks so much and enjoy your day! 🪣`;
     return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Here is the link to pay, thank you so much and enjoy your day!${payLine} 🪣`;

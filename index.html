@@ -1161,7 +1161,7 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></div>
+      <div class="route-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></span><button onclick="msgRoute('${r.replace(/\x27/g,'')}','beforeTomorrow')" class="btn btn-sm" style="font-size:12px;padding:4px 10px">📲 See you tomorrow</button></div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
           <div class="order-btns">
@@ -1364,16 +1364,14 @@ function getPayLink(c){
 function getMsg(c,type){
   const first=c.name.split(' ')[0];
   const link=getPayLink(c);
-  const payLine=link?`
-Pay here: ${link}`:``;
+  const payLine=link?`\nPay here: ${link}`:``;
   if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows soon. See you then! 🪣`;
+  if(type==='beforeTomorrow')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
   if(type==='after'){
-    if(c.paid)return`Hi ${first}! All done — your windows are sparkling clean! 💧 Thanks so much, all sorted! 🪣`;
-    return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you.${payLine}
-Thanks a million! 🪣`;
+    if(c.paid)return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Thanks so much and enjoy your day! 🪣`;
+    return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Here is the link to pay, thank you so much and enjoy your day!${payLine} 🪣`;
   }
-  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}
-No rush, whenever you get a chance! Thanks 🪣`;
+  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
 }
 
 // ── EDIT SCREEN ───────────────────────────────────────────────────────────────
@@ -1599,6 +1597,20 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch
     });
   }catch(e){showLogin();}
 })();
+function msgRoute(route,msgType){
+  const list=customers.filter(x=>x.route===route&&(x.whatsapp||x.phone));
+  if(!list.length){showToast('No customers with WhatsApp on this route');return;}
+  if(!confirm('Open WhatsApp for all '+list.length+' customers on '+route+'?'))return;
+  let i=0;
+  function openNext(){
+    if(i>=list.length){showToast('Opened '+list.length+' chats!');return;}
+    const cust=list[i++];
+    const num=(cust.whatsapp||cust.phone).replace(/[^0-9]/g,'');
+    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(getMsg(cust,msgType)),'_blank');
+    setTimeout(openNext,800);
+  }
+  openNext();
+}
 </script>
 </body>
 </html>

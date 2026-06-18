@@ -429,11 +429,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
       Routes
     </button>
-    <button class="nav-btn" onclick="showTab('payments',this)">
+    <button class="nav-btn" id="nav-pay" onclick="showTab('payments',this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Pay
     </button>
-    <button class="nav-btn" onclick="showTab('history',this)">
+    <button class="nav-btn" id="nav-history" onclick="showTab('history',this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       History
     </button>
@@ -759,12 +759,13 @@ async function loadCustomers(){
 }
 
 function applyRoleUI(){
-  if(currentUserRole==='employee'){window.location.replace('employee.html');return;}
   const isAdmin=currentUserRole==='admin';
   // FAB — only admin can add customers
   document.getElementById('fab-add').style.display=isAdmin?'flex':'none';
   // Admin tab in nav
   document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
+  document.getElementById('nav-pay').style.display=isAdmin?'flex':'none';
+  document.getElementById('nav-history').style.display=isAdmin?'flex':'none';
   // Edit buttons on cards — controlled in renderCustomers
   document.getElementById('header-sub').textContent=
     isAdmin?`Admin · ${customers.length} customers`:`${currentUserName} · Employee`;
@@ -846,7 +847,7 @@ async function renderDashboard(){
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
     <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value red">${unpaid}</div></div>
-    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${earned}</div></div>
+    ${currentUserRole==='admin'?`<div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${earned}</div></div>`:""}
     <div class="metric"><div class="metric-label">Overdue</div><div class="metric-value amber">${overdue.length}</div></div>`;
 
   const roleLabel=currentUserRole==='admin'?'Admin':'Employee';
@@ -915,13 +916,11 @@ function renderCustomers(){
             ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
             ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
           </div>
-          ${owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; Owes &pound;${c.price} from last time</div>`:""}
+          ${currentUserRole==='admin'&&owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; Owes &pound;${c.price} from last time</div>`:""}
           ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
-          </button>
+          ${currentUserRole==='admin'?`<button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0"><span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span></button>`:`<span class="badge ${c.paid?'badge-green':'badge-amber'}">${c.paid?'✓ Paid':'Unpaid'}</span>`}
           ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>`:''}
         </div>
       </div>
@@ -933,7 +932,7 @@ function renderCustomers(){
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Before</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ After</a>`:''}
-        ${!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase</a>`:''}
+        ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
       </div>
     </div>`;
@@ -1054,7 +1053,7 @@ function showStop(idx){
 
   const tags=[];
   if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
-  tags.push(c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">Unpaid £${c.price}</span>`);
+  if(currentUserRole==='admin'){tags.push(c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">Unpaid £${c.price}</span>`);}else{tags.push(c.paid?`<span class="badge badge-green">&#10003; Paid</span>`:`<span class="badge badge-amber">Unpaid</span>`);}
   if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
   if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
   if(c.notes) tags.push(`<span class="badge badge-amber">⚠️ ${esc(c.notes)}</span>`);
@@ -1162,7 +1161,7 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length}) · £${earned}/£${total}</span></div>
+      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
           <div class="order-btns">
@@ -1179,7 +1178,7 @@ function renderRoutes(){
           </div>
           <div class="route-item-actions">
             ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">📞</a>`:''}
-            <button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">£${c.price}${c.paid?' ✓':''}</button>
+            ${currentUserRole==='admin'?`<button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">£${c.price}${c.paid?' ✓':''}</button>`:""}
           </div>
         </div>`).join('')}
       </div>

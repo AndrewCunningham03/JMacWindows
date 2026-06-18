@@ -503,6 +503,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
         <option value="Employee">Employee</option>
       </select>
     </div>
+    <div class="field">
+      <label>Did they pay?</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button id="pay-btn-no" class="btn btn-sm btn-amber" style="flex:1;font-size:14px;opacity:1" onclick="setPaidOnSpot(false)">Not paid</button>
+        <button id="pay-btn-yes" class="btn btn-sm" style="flex:1;font-size:14px;background:#d1fae5;color:#065f46;border:2px solid #d1fae5" onclick="setPaidOnSpot(true)">Paid!</button>
+      </div>
+    </div>
     <div class="field"><label>Visit notes (optional)</label>
       <textarea id="done-notes" placeholder="e.g. back gate was locked, did front only…"></textarea>
     </div>
@@ -1270,22 +1277,32 @@ function openDoneModal(id){
   const c=customers.find(x=>x.id===id);
   document.getElementById('done-modal-customer').textContent=c?c.name:'';
   document.getElementById('done-notes').value='';
+  window._paidOnSpot=false;
+  setTimeout(()=>setPaidOnSpot(false),10);
   document.getElementById('done-modal').classList.add('open');
+}
+function setPaidOnSpot(val){
+  window._paidOnSpot=val;
+  document.getElementById('pay-btn-no').style.border=val?'2px solid transparent':'2px solid #d97706';
+  document.getElementById('pay-btn-yes').style.border=val?'2px solid #16a34a':'2px solid transparent';
+  document.getElementById('pay-btn-no').style.fontWeight=val?'normal':'700';
+  document.getElementById('pay-btn-yes').style.fontWeight=val?'700':'normal';
 }
 function closeDoneModal(){document.getElementById('done-modal').classList.remove('open');}
 async function confirmDone(){
   const c=customers.find(x=>x.id===doneForId);if(!c)return;
   const notes=document.getElementById('done-notes').value.trim();
   const doneBy=document.getElementById('done-by').value;
+  const paidNow=window._paidOnSpot||false;
   const today=new Date().toLocaleDateString('en-GB');
   const isoDate=new Date().toISOString().split('T')[0];
-  // Record the clean � paid stays untouched (done ? paid)
-  await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:c.paid,visit_notes:notes,done_by:doneBy});
+  if(paidNow){ c.paid=true; await db.from('customers').update({paid:true}).eq('id',c.id); }
+  await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:paidNow,visit_notes:notes,done_by:doneBy});
   c.last_cleaned=today;
   await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
   closeDoneModal();
   renderCustomers();renderPayments();renderDashboard();
-  showToast(`Done: ${c.name}`);
+    showToast(paidNow?`Done + paid: ${c.name}`:`Done: ${c.name}`);
 }
 document.getElementById('done-modal').addEventListener('click',function(e){if(e.target===this)closeDoneModal();});
 

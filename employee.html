@@ -607,19 +607,14 @@ function showApp(){document.getElementById('login-screen').classList.remove('sho
 // ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadCustomers(){
   showLoading();
-  // Load customers
-  const {data,error}=await db.from('customers').select('*').order('route_order',{ascending:true}).order('name');
-  if(error){showToast('Error loading');showApp();return;}
-  if(!data||data.length===0){
-    await db.from('customers').insert(SEED);
-    const {data:s}=await db.from('customers').select('*').order('name');
-    customers=s||[];
-  } else {customers=data;}
+  try{
+    // Get user first
+    const {data:authData}=await db.auth.getUser();
+    const user=authData?.user;
+    if(!user){showLogin();return;}
+    currentUserEmail=user.email||'';
 
-  // Load user profile + role
-  const {data:{user}}=await db.auth.getUser();
-  currentUserEmail=user?.email||'';
-  if(user){
+    // Load profile
     let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
     if(!profile){
       const newProfile={id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'};
@@ -628,14 +623,25 @@ async function loadCustomers(){
     }
     currentUserRole=profile.role||'employee';
     currentUserName=profile.name||user.email.split('@')[0];
-  }
 
-  applyRoleUI();
-  showApp();
-  initBanner();
-  initChips();
-  renderDashboard();
-  renderCustomers();
+    // Redirect admin away from employee view
+    applyRoleUI();
+
+    // Load customers (never insert seed - employee read-only)
+    const {data,error}=await db.from('customers').select('*').order('route_order',{ascending:true}).order('name');
+    customers=data||[];
+
+    showApp();
+    initBanner();
+    initChips();
+    renderDashboard();
+    renderCustomers();
+  }catch(e){
+    console.error(e);
+    showLogin();
+    const el=document.getElementById('login-error');
+    if(el){el.textContent='Error: '+e.message;el.style.display='block';}
+  }
 }
 
 function applyRoleUI(){

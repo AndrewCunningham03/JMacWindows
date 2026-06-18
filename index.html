@@ -817,7 +817,7 @@ function showTab(t,btn){
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   if(btn)btn.classList.add('active');
-  document.getElementById('fab-add').style.display=(t==='customers'&&currentUserRole==='admin')?'flex':'none';
+  document.getElementById('fab-add').style.display=((t==='customers'||t==='admin')&&currentUserRole==='admin')?'flex':'none';
   if(t==='dashboard'){renderDashboard();}
   if(t==='customers'){renderCustomers();}
   if(t==='map'){initMap();}

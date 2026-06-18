@@ -1174,19 +1174,21 @@ function showToast(msg){
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+function openEditScreen(){}
 (async()=>{
   try{
     db.auth.onAuthStateChange(async(event,session)=>{
-      if(event==='INITIAL_SESSION'){
-        if(session){await loadCustomers();}else{showLogin();}
-      } else if(event==='SIGNED_IN'){
-        await loadCustomers();
-      } else if(event==='SIGNED_OUT'){
-        showLogin();customers=[];
-      }
+      try{
+        if(event==='INITIAL_SESSION'){
+          if(session){await loadCustomers();}else{showLogin();}
+        } else if(event==='SIGNED_IN'){
+          await loadCustomers();
+        } else if(event==='SIGNED_OUT'){
+          showLogin();customers=[];
+        }
+      }catch(e){console.error(e);showLogin();}
     });
   }catch(e){showLogin();}
-function openEditScreen(){}
 })();
 </script>
 </body>

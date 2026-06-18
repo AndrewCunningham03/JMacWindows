@@ -361,6 +361,31 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div id="payments-list"></div>
     </div>
 
+    <!-- ADMIN -->
+    <div class="tab" id="tab-admin">
+      <div class="dash-section">
+        <div class="dash-title">📊 This month</div>
+        <div class="metrics" id="admin-metrics"></div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-title">👥 Team</div>
+        <div id="admin-users"></div>
+        <div style="margin-top:10px">
+          <div class="dash-title" style="margin-bottom:6px">Invite employee</div>
+          <div style="display:flex;gap:8px">
+            <input id="invite-email" type="email" placeholder="employee@email.com" class="field input" style="flex:1;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
+            <input id="invite-name" type="text" placeholder="Name" style="width:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
+            <button class="btn btn-blue" onclick="inviteEmployee()">Add</button>
+          </div>
+          <div class="field-hint" style="margin-top:6px">They sign up at your site URL with this email — they'll appear as Employee automatically.</div>
+        </div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-title">🏠 All customers summary</div>
+        <div id="admin-route-summary"></div>
+      </div>
+    </div>
+
     <!-- HISTORY -->
     <div class="tab" id="tab-history">
       <div class="metrics" id="hist-metrics"></div>
@@ -390,6 +415,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <button class="nav-btn" onclick="showTab('payments',this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Pay
+    </button>
+    <button class="nav-btn" id="nav-admin" onclick="showTab('admin',this)" style="display:none">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Admin
     </button>
   </nav>
 </div>
@@ -499,6 +528,8 @@ let histYear = new Date().getFullYear();
 let mapInstance = null;
 let mapRouteFilter = '';
 let currentUserEmail = '';
+let currentUserRole = 'employee'; // 'admin' or 'employee'
+let currentUserName = '';
 
 // ── SEED DATA ─────────────────────────────────────────────────────────────────
 const SEED = [
@@ -668,6 +699,7 @@ function showApp(){document.getElementById('login-screen').classList.remove('sho
 // ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadCustomers(){
   showLoading();
+  // Load customers
   const {data,error}=await db.from('customers').select('*').order('route_order',{ascending:true}).order('name');
   if(error){showToast('Error loading');showApp();return;}
   if(!data||data.length===0){
@@ -675,13 +707,44 @@ async function loadCustomers(){
     const {data:s}=await db.from('customers').select('*').order('name');
     customers=s||[];
   } else {customers=data;}
+
+  // Load user profile + role
   const {data:{user}}=await db.auth.getUser();
-  currentUserEmail=user?.email||'Andrew';
+  currentUserEmail=user?.email||'';
+  if(user){
+    let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
+    if(!profile){
+      // First login — create profile
+      await db.from('profiles').insert({id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'});
+      // Auto-promote if it's the admin email
+      if(user.email==='andrewcunningham9911@gmail.com'){
+        await db.from('profiles').update({role:'admin'}).eq('id',user.id);
+        profile={role:'admin',name:'Andrew'};
+      } else {
+        profile={role:'employee',name:user.email.split('@')[0]};
+      }
+    }
+    currentUserRole=profile.role||'employee';
+    currentUserName=profile.name||user.email.split('@')[0];
+  }
+
   showApp();
+  applyRoleUI();
   initBanner();
   initChips();
   renderDashboard();
   renderCustomers();
+}
+
+function applyRoleUI(){
+  const isAdmin=currentUserRole==='admin';
+  // FAB — only admin can add customers
+  document.getElementById('fab-add').style.display=isAdmin?'flex':'none';
+  // Admin tab in nav
+  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
+  // Edit buttons on cards — controlled in renderCustomers
+  document.getElementById('header-sub').textContent=
+    isAdmin?`Admin · ${customers.length} customers`:`${currentUserName} · Employee`;
 }
 
 // ── WEEK / BANNER ─────────────────────────────────────────────────────────────
@@ -728,6 +791,7 @@ function showTab(t,btn){
   if(t==='routes'){renderWeekTabs();renderRoutes();}
   if(t==='payments'){renderPayMetrics();renderPayments();}
   if(t==='history'){renderHistory();}
+  if(t==='admin'){renderAdmin();}
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -821,7 +885,7 @@ function renderCustomers(){
           <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
             <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
           </button>
-          <button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>
+          ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>`:''}
         </div>
       </div>
       <div class="card-badges" style="margin-top:8px">
@@ -1360,6 +1424,92 @@ async function deleteCustomer(){
   customers=customers.filter(x=>x.id!==editingId);
   closeEditScreen();renderCustomers();renderDashboard();
   showToast('Customer deleted');
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+async function renderAdmin(){
+  // Monthly stats from cleaning_history
+  const now=new Date();
+  const monthStart=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const {data:jobs}=await db.from('cleaning_history')
+    .select('*,customers(name,route,price,paid)')
+    .gte('cleaned_date',monthStart);
+
+  const jobsDone=(jobs||[]).length;
+  const earned=(jobs||[]).reduce((s,j)=>s+Number(j.price||0),0);
+  const paid=customers.filter(c=>c.paid).length;
+  const unpaid=customers.filter(c=>!c.paid).length;
+  const owed=customers.filter(c=>!c.paid).reduce((s,c)=>s+Number(c.price),0);
+
+  document.getElementById('admin-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Jobs this month</div><div class="metric-value blue">${jobsDone}</div></div>
+    <div class="metric"><div class="metric-label">Earned this month</div><div class="metric-value green">£${earned}</div></div>
+    <div class="metric"><div class="metric-label">Customers paid</div><div class="metric-value green">${paid}</div></div>
+    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>`;
+
+  // By-employee breakdown
+  const byEmp={};
+  (jobs||[]).forEach(j=>{
+    const who=j.done_by||'Unknown';
+    if(!byEmp[who])byEmp[who]={jobs:0,earned:0};
+    byEmp[who].jobs++;byEmp[who].earned+=Number(j.price||0);
+  });
+  const empRows=Object.entries(byEmp).map(([name,s])=>
+    `<div class="route-item"><div class="route-item-info"><div class="route-item-name">${esc(name)}</div><div class="route-item-addr">${s.jobs} jobs · £${s.earned} earned this month</div></div></div>`
+  ).join('');
+
+  // Users list
+  const {data:profiles}=await db.from('profiles').select('*').order('created_at');
+  const userRows=(profiles||[]).map(p=>`
+    <div class="route-item">
+      <div class="route-item-info">
+        <div class="route-item-name">${esc(p.name||p.email)}</div>
+        <div class="route-item-addr">${esc(p.email||'')} · ${p.role}</div>
+        ${empRows.includes(esc(p.name||p.email))?'':``}
+      </div>
+      <div style="display:flex;gap:6px">
+        ${p.role==='employee'?`<button class="btn btn-sm btn-blue" onclick="setRole('${p.id}','admin')">Make admin</button>`:`<button class="btn btn-sm" onclick="setRole('${p.id}','employee')">Make employee</button>`}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('admin-users').innerHTML=`
+    <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px;margin-bottom:8px">
+      ${userRows||'<div style="padding:12px;color:var(--text-muted)">No users yet</div>'}
+    </div>
+    ${empRows?`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px"><div style="padding:10px 0 4px;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase">This month by employee</div>${empRows}</div>`:''}`;
+
+  // Route summary
+  document.getElementById('admin-route-summary').innerHTML=`
+    <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
+    ${ROUTES.map(r=>{
+      const list=customers.filter(c=>c.route===r);
+      const paidC=list.filter(c=>c.paid);
+      const owed=list.filter(c=>!c.paid).reduce((s,c)=>s+Number(c.price),0);
+      return`<div class="route-item">
+        <div class="route-item-info">
+          <div class="route-item-name">${esc(r)}</div>
+          <div class="route-item-addr">${list.length} customers · ${paidC.length} paid${owed?` · <span style="color:var(--red)">£${owed} owed</span>`:' · all paid ✓'}</div>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+
+async function setRole(userId, role){
+  await db.from('profiles').update({role}).eq('id',userId);
+  showToast(`Role updated to ${role}`);
+  renderAdmin();
+}
+
+async function inviteEmployee(){
+  const email=document.getElementById('invite-email').value.trim();
+  const name=document.getElementById('invite-name').value.trim();
+  if(!email){showToast('Enter an email address');return;}
+  // Pre-create a profile row so when they sign up they get the right name
+  // (Supabase will link by user ID on first login)
+  showToast(`Tell ${name||email} to sign up at your site — they'll appear here automatically`);
+  document.getElementById('invite-email').value='';
+  document.getElementById('invite-name').value='';
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────

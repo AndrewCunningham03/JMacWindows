@@ -423,15 +423,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <div class="dash-section">
         <div class="dash-title">👥 Team</div>
         <div id="admin-users"></div>
-        <div style="margin-top:10px">
-          <div class="dash-title" style="margin-bottom:6px">Invite employee</div>
-          <div style="display:flex;gap:8px">
-            <input id="invite-email" type="email" placeholder="employee@email.com" class="field input" style="flex:1;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
-            <input id="invite-name" type="text" placeholder="Name" style="width:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
-            <button class="btn btn-blue" onclick="inviteEmployee()">Add</button>
-          </div>
-          <div class="field-hint" style="margin-top:6px">They sign up at your site URL with this email — they'll appear as Employee automatically.</div>
-        </div>
+        <div class="field-hint" style="margin-top:8px">New staff sign in at your site link with their own email — they appear here automatically as an Employee, then you can tap "Make admin" if needed.</div>
       </div>
       <div class="dash-section">
         <div class="dash-title">🏠 All customers summary</div>
@@ -546,12 +538,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="modal-handle"></div>
     <div class="modal-title">Mark job done</div>
     <div id="done-modal-customer" style="font-size:15px;font-weight:600;color:var(--blue);margin-bottom:16px"></div>
-    <div class="field"><label>Who did the job?</label>
-      <select id="done-by">
-        <option value="Andrew">Andrew (me)</option>
-        <option value="Employee">Employee</option>
-      </select>
-    </div>
+    <input id="done-by" type="hidden">
     <div class="field">
       <label>Did they pay?</label>
       <div style="display:flex;gap:8px;margin-top:4px">
@@ -940,7 +927,7 @@ function setCustFilter(f,btn){
 function renderCustomers(){
   const q=document.getElementById('search').value.toLowerCase();
   let list=customers.filter(c=>{
-    if(q&&!c.name.toLowerCase().includes(q)&&!(c.addr||'').toLowerCase().includes(q))return false;
+    if(q&&!(c.name||'').toLowerCase().includes(q)&&!(c.addr||'').toLowerCase().includes(q))return false;
     if(activeRouteFilter&&c.route!==activeRouteFilter)return false;
     if(custFilter==='overdue'&&!isOverdue(c))return false;
     if(custFilter==='unpaid'&&c.paid)return false;
@@ -978,9 +965,9 @@ function renderCustomers(){
       </div>
       <div class="card-actions">
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Before</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ After</a>`:''}
-        ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Coming soon</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ All done</a>`:''}
+        ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Payment reminder</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
       </div>
     </div>`;
@@ -1284,7 +1271,7 @@ function setPayFilter(f,btn){
 function renderPayments(){
   const q=document.getElementById('pay-search').value.toLowerCase();
   let list=customers.filter(c=>{
-    if(q&&!c.name.toLowerCase().includes(q)&&!c.route.toLowerCase().includes(q))return false;
+    if(q&&!(c.name||'').toLowerCase().includes(q)&&!(c.route||'').toLowerCase().includes(q))return false;
     if(payFilter==='paid'&&!c.paid)return false;
     if(payFilter==='unpaid'&&c.paid)return false;
     if(payFilter==='overdue'&&!isOverdue(c))return false;
@@ -1326,6 +1313,7 @@ function openDoneModal(id){
   doneForId=id;
   const c=customers.find(x=>x.id===id);
   document.getElementById('done-modal-customer').textContent=c?c.name:'';
+  document.getElementById('done-by').value=currentUserName||'Me';
   document.getElementById('done-notes').value='';
   window._paidOnSpot=false;
   setTimeout(()=>setPaidOnSpot(false),10);
@@ -1346,13 +1334,18 @@ async function confirmDone(){
   const paidNow=window._paidOnSpot||false;
   const today=new Date().toLocaleDateString('en-GB');
   const isoDate=new Date().toISOString().split('T')[0];
-  if(paidNow){ c.paid=true; await db.from('customers').update({paid:true}).eq('id',c.id); }
-  await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:paidNow,visit_notes:notes,done_by:doneBy});
-  c.last_cleaned=today;
-  await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
-  closeDoneModal();
-  renderCustomers();renderPayments();renderDashboard();
+  try{
+    const {error}=await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:paidNow,visit_notes:notes,done_by:doneBy});
+    if(error)throw error;
+    if(paidNow){ c.paid=true; await db.from('customers').update({paid:true}).eq('id',c.id); }
+    c.last_cleaned=today;
+    await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
+    closeDoneModal();
+    renderCustomers();renderPayments();renderDashboard();
     showToast(paidNow?`Done + paid: ${c.name}`:`Done: ${c.name}`);
+  }catch(err){
+    showToast('Error: '+(err.message||'Could not save job'));
+  }
 }
 document.getElementById('done-modal').addEventListener('click',function(e){if(e.target===this)closeDoneModal();});
 
@@ -1601,7 +1594,9 @@ async function renderAdmin(){
 }
 
 async function setRole(userId, role){
-  await db.from('profiles').update({role}).eq('id',userId);
+  const {data,error}=await db.from('profiles').update({role}).eq('id',userId).select();
+  if(error){showToast('Error: '+error.message);return;}
+  if(!data||!data.length){showToast('Not allowed — run the admin SQL in Supabase');return;}
   showToast(`Role updated to ${role}`);
   renderAdmin();
 }
@@ -1657,15 +1652,6 @@ async function bulkImport(){
     if(btn){btn.disabled=false;btn.textContent='Import customers';}
   }
 }
-async function inviteEmployee(){
-  const email=document.getElementById('invite-email').value.trim();
-  const name=document.getElementById('invite-name').value.trim();
-  if(!email){showToast('Enter an email address');return;}
-  showToast((name||email)+' — ask them to sign up at the site and you can set their role in Supabase.');
-  document.getElementById('invite-email').value='';
-  document.getElementById('invite-name').value='';
-}
-
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showToast(msg){

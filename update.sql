@@ -10,6 +10,7 @@ alter table customers add column if not exists revolut_link text default '';
 alter table customers add column if not exists lat float;
 alter table customers add column if not exists lng float;
 alter table customers add column if not exists route_order int default 999;
+alter table customers add column if not exists greeting_name text default '';
 
 alter table cleaning_history add column if not exists visit_notes text default '';
 alter table cleaning_history add column if not exists done_by text default '';

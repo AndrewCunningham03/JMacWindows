@@ -437,6 +437,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="dash-title">🏠 All customers summary</div>
         <div id="admin-route-summary"></div>
       </div>
+      <div class="dash-section">
+        <div class="dash-title">📥 Bulk import customers</div>
+        <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:14px">
+          <div class="field-hint" style="margin-bottom:8px">Paste rows from a spreadsheet — one customer per line. Columns in this order (Tab or comma separated):</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">Name · Address · Phone · Price · Route · Frequency</div>
+          <textarea id="bulk-input" placeholder="Paula Beggan&#9;Keady&#9;+447493204539&#9;25&#9;Keady / Derrynoose&#9;monthly" style="width:100%;min-height:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:13px;font-family:monospace;outline:none;resize:vertical;background:var(--white);color:var(--text)"></textarea>
+          <div class="field-hint" style="margin:8px 0">Only Name is required. Frequency is "monthly" or "2months" (defaults to monthly).</div>
+          <button class="btn btn-blue btn-full" onclick="bulkImport()">Import customers</button>
+        </div>
+      </div>
     </div>
 
     <!-- HISTORY -->
@@ -494,6 +504,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name" autocomplete="off"></div>
       <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
     </div>
+    <div class="field"><label>Greeting name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input id="f-greeting" type="text" placeholder="e.g. Paula — used in WhatsApp messages" autocomplete="off"><div class="field-hint">Leave blank to use the first word of the name above</div></div>
     <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode" autocomplete="off"></div>
     <div class="field-row">
       <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44…"></div>
@@ -878,7 +889,8 @@ async function renderDashboard(){
   document.getElementById('dash-week-card').innerHTML=`
     <div class="dash-week-label">This week you're on</div>
     <div class="dash-week-name">${wk}</div>
-    <div class="dash-week-routes">${wkRoutes.map(r=>'📍 '+r).join('<br>')}</div>`;
+    <div class="dash-week-routes">${wkRoutes.map(r=>'📍 '+r).join('<br>')}</div>
+    <button onclick="startTodaysRound()" style="margin-top:14px;width:100%;background:#fff;color:var(--blue-dark);border:none;border-radius:10px;padding:11px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">🚐 Start this week's round</button>`;
 
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
@@ -1189,6 +1201,11 @@ function renderWeekTabs(){
     `<button class="chip ${w===activeWeek?'active':''}" onclick="setWeek('${w}')">${w}</button>`).join('');
 }
 function setWeek(w){activeWeek=w;renderWeekTabs();renderRoutes();}
+function startTodaysRound(){
+  activeWeek=getCurrentWeek();
+  const navBtn=document.querySelector('.nav-btn[onclick*="routes"]');
+  showTab('routes',navBtn);
+}
 
 function renderRoutes(){
   const routeNames=WEEKS[activeWeek]||[];
@@ -1399,7 +1416,7 @@ function getPayLink(c){
   return null;
 }
 function getMsg(c,type){
-  const first=c.name.split(' ')[0];
+  const first=(c.greeting_name&&c.greeting_name.trim())||c.name.split(' ')[0];
   const link=getPayLink(c);
   const payLine=link?`\nPay here: ${link}`:``;
   if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows soon. See you then! 🪣`;
@@ -1421,6 +1438,7 @@ function openEditScreen(id){
     document.getElementById('edit-screen-title').textContent='Edit customer';
     delBtn.style.display='block';
     document.getElementById('f-name').value=c.name;
+    document.getElementById('f-greeting').value=c.greeting_name||'';
     document.getElementById('f-addr').value=c.addr||'';
     document.getElementById('f-phone').value=c.phone||'';
     document.getElementById('f-whatsapp').value=c.whatsapp||'';
@@ -1436,7 +1454,7 @@ function openEditScreen(id){
   } else {
     document.getElementById('edit-screen-title').textContent='Add customer';
     delBtn.style.display='none';
-    ['name','addr','phone','whatsapp','notes','directions','gate','stripe','revolut'].forEach(f=>{
+    ['name','greeting','addr','phone','whatsapp','notes','directions','gate','stripe','revolut'].forEach(f=>{
       const el=document.getElementById('f-'+f);if(el)el.value='';
     });
     document.getElementById('f-price').value=20;
@@ -1461,6 +1479,7 @@ async function saveCustomer(){
   const addr=document.getElementById('f-addr').value.trim();
   const data={
     name,addr,
+    greeting_name:document.getElementById('f-greeting').value.trim(),
     phone:document.getElementById('f-phone').value.trim(),
     whatsapp:document.getElementById('f-whatsapp').value.trim(),
     route:document.getElementById('f-route').value,
@@ -1588,15 +1607,55 @@ async function setRole(userId, role){
 }
 
 async function newCycle(route){
-  const list=customers.filter(c=>c.route===route&&c.paid);
-  if(!list.length){showToast('No paid customers on this route');return;}
-  if(!confirm(`Start new cycle for ${route}? This will mark all ${list.length} paid customers as unpaid ready for next round. History is preserved.`))return;
-  for(const c of list){
-    c.paid=false;
-    await db.from('customers').update({paid:false}).eq('id',c.id);
-  }
+  const list=customers.filter(c=>c.route===route);
+  if(!list.length){showToast('No customers on this route');return;}
+  const stillOwing=list.filter(c=>!c.paid).length;
+  const warn=stillOwing?`\n\n⚠️ ${stillOwing} customer(s) still haven't paid for the last clean — their unpaid history stays recorded.`:'';
+  if(!confirm(`Start new cycle for ${route}? All ${list.length} customers will be marked unpaid ready for the next round. Cleaning history is preserved.${warn}`))return;
+  const toReset=list.filter(c=>c.paid);
+  await Promise.all(toReset.map(c=>{c.paid=false;return db.from('customers').update({paid:false}).eq('id',c.id);}));
   renderCustomers();renderPayments();renderDashboard();renderAdmin();
-  showToast(`New cycle started for ${route} - ${list.length} customers reset`);
+  showToast(`New cycle started for ${route}`);
+}
+async function bulkImport(){
+  const raw=document.getElementById('bulk-input').value.trim();
+  if(!raw){showToast('Paste some rows first');return;}
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const rows=[];
+  for(const line of lines){
+    const parts=line.includes('\t')?line.split('\t'):line.split(',');
+    const name=(parts[0]||'').trim();
+    if(!name)continue;
+    let route=(parts[4]||'').trim();
+    const match=ROUTES.find(r=>r.toLowerCase()===route.toLowerCase());
+    route=match||route||ROUTES[0];
+    let freq=(parts[5]||'').trim().toLowerCase();
+    freq=(freq.includes('2')||freq.includes('two'))?'2months':'monthly';
+    rows.push({
+      name,
+      addr:(parts[1]||'').trim(),
+      phone:(parts[2]||'').trim(),
+      price:parseFloat(parts[3])||20,
+      route,freq,
+      paid:false,last_cleaned:'',route_order:999
+    });
+  }
+  if(!rows.length){showToast('No valid rows found');return;}
+  if(!confirm(`Import ${rows.length} customer(s)?`))return;
+  const btn=document.querySelector('[onclick="bulkImport()"]');
+  if(btn){btn.disabled=true;btn.textContent='Importing…';}
+  try{
+    const {data:inserted,error}=await db.from('customers').insert(rows).select();
+    if(error)throw error;
+    customers.push(...(inserted||[]));
+    document.getElementById('bulk-input').value='';
+    renderCustomers();renderDashboard();renderAdmin();
+    showToast(`Imported ${(inserted||[]).length} customers ✓`);
+  }catch(err){
+    showToast('Error: '+(err.message||'Import failed'));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Import customers';}
+  }
 }
 async function inviteEmployee(){
   const email=document.getElementById('invite-email').value.trim();

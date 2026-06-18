@@ -820,7 +820,7 @@ async function renderDashboard(){
   const total=customers.length;
   const unpaid=customers.filter(c=>!c.paid).length;
   const overdue=customers.filter(isOverdue);
-  // Earnings from cleaning_history this month — survives cycle resets
+  // Earnings from cleaning_history this month ï¿½ survives cycle resets
   const now=new Date();
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
   const {data:thisMonthJobs}=await db.from('cleaning_history').select('price').gte('cleaned_date',monthStart);
@@ -1271,7 +1271,7 @@ async function confirmDone(){
   const doneBy=document.getElementById('done-by').value;
   const today=new Date().toLocaleDateString('en-GB');
   const isoDate=new Date().toISOString().split('T')[0];
-  // Record the clean — paid stays untouched (done ? paid)
+  // Record the clean ï¿½ paid stays untouched (done ? paid)
   await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:c.paid,visit_notes:notes,done_by:doneBy});
   c.last_cleaned=today;
   await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
@@ -1528,13 +1528,13 @@ async function setRole(userId, role){
 async function newCycle(route){
   const list=customers.filter(c=>c.route===route&&c.paid);
   if(!list.length){showToast('No paid customers on this route');return;}
-  if(!confirm(Start new cycle for ? This will mark all  paid customers as unpaid ready for next round. History is preserved.))return;
+  if(!confirm(`Start new cycle for ${route}? This will mark all ${list.length} paid customers as unpaid ready for next round. History is preserved.`))return;
   for(const c of list){
     c.paid=false;
     await db.from('customers').update({paid:false}).eq('id',c.id);
   }
   renderCustomers();renderPayments();renderDashboard();renderAdmin();
-  showToast(New cycle started for  -  customers reset);
+  showToast(`New cycle started for ${route} - ${list.length} customers reset`);
 }
 async function inviteEmployee(){
   const email=document.getElementById('invite-email').value.trim();

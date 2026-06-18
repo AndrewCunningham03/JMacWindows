@@ -431,9 +431,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div class="field"><label>Gate / access code</label><input id="f-gate" type="text" placeholder="e.g. 1234"></div>
     </div>
     <div class="field"><label>Directions</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round back…" style="min-height:55px"></textarea></div>
-    <div class="field"><label>Stripe payment link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/…">
-      <div class="field-hint">Paste your Stripe link so customers can pay online</div>
+    <div class="field-row">
+      <div class="field"><label>Stripe link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/…"></div>
+      <div class="field"><label>Revolut link</label><input id="f-revolut" type="url" placeholder="https://revolut.me/…"></div>
     </div>
+    <div class="field-hint" style="margin-top:-8px;margin-bottom:10px">Add either or both payment links — they'll appear on message templates</div>
     <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notes…" style="min-height:55px"></textarea></div>
   </div>
   <div class="screen-footer">
@@ -828,9 +830,10 @@ function renderCustomers(){
       </div>
       <div class="card-actions">
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm btn-green">💬 WhatsApp</a>`:''}
-        ${!c.paid&&c.phone?`<a href="sms:${esc(c.phone)}?body=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase pay</a>`:''}
-        <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Mark done</button>
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Before</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ After</a>`:''}
+        ${!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase</a>`:''}
+        <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
       </div>
     </div>`;
   }).join('');
@@ -1244,11 +1247,18 @@ function renderHistYearTabs(){
 function setHistYear(y){histYear=y;renderHistory();}
 
 // ── MESSAGES ──────────────────────────────────────────────────────────────────
+function getPayLink(c){
+  if(c.revolut_link) return c.revolut_link;
+  if(c.stripe_link) return c.stripe_link;
+  return null;
+}
 function getMsg(c,type){
   const first=c.name.split(' ')[0];
+  const link=getPayLink(c);
+  const payLine=link?`\nPay here: ${link}`:``;
   if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
-  if(type==='after')return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you. Thanks a million!`;
-  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning. No rush, whenever you get a chance! Thanks 🪣`;
+  if(type==='after')return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you.${payLine}\nThanks a million! 🪣`;
+  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
 }
 
 // ── EDIT SCREEN ───────────────────────────────────────────────────────────────
@@ -1271,11 +1281,12 @@ function openEditScreen(id){
     document.getElementById('f-gate').value=c.gate_code||'';
     document.getElementById('f-directions').value=c.directions||'';
     document.getElementById('f-stripe').value=c.stripe_link||'';
+    document.getElementById('f-revolut').value=c.revolut_link||'';
     document.getElementById('f-notes').value=c.notes||'';
   } else {
     document.getElementById('edit-screen-title').textContent='Add customer';
     delBtn.style.display='none';
-    ['name','addr','phone','whatsapp','notes','directions','gate','stripe'].forEach(f=>{
+    ['name','addr','phone','whatsapp','notes','directions','gate','stripe','revolut'].forEach(f=>{
       const el=document.getElementById('f-'+f);if(el)el.value='';
     });
     document.getElementById('f-price').value=20;
@@ -1309,6 +1320,7 @@ async function saveCustomer(){
     gate_code:document.getElementById('f-gate').value.trim(),
     directions:document.getElementById('f-directions').value.trim(),
     stripe_link:document.getElementById('f-stripe').value.trim(),
+    revolut_link:document.getElementById('f-revolut').value.trim(),
     notes:document.getElementById('f-notes').value.trim()
   };
   try{

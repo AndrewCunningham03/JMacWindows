@@ -6,6 +6,7 @@ alter table customers add column if not exists windows_count int default 0;
 alter table customers add column if not exists gate_code text default '';
 alter table customers add column if not exists directions text default '';
 alter table customers add column if not exists stripe_link text default '';
+alter table customers add column if not exists revolut_link text default '';
 alter table customers add column if not exists lat float;
 alter table customers add column if not exists lng float;
 alter table customers add column if not exists route_order int default 999;

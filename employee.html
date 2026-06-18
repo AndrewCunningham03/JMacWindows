@@ -383,10 +383,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="modal-title">Mark job done</div>
     <div id="done-modal-customer" style="font-size:15px;font-weight:600;color:var(--blue);margin-bottom:16px"></div>
     <div class="field"><label>Who did the job?</label>
-      <select id="done-by">
-        <option value="Andrew">Andrew (me)</option>
-        <option value="Employee">Employee</option>
-      </select>
+      <input id="done-by" type="hidden"><div style="padding:10px 12px;background:var(--gray-light);border-radius:var(--radius-sm);font-size:14px" id="done-by-display">Loading...</div>
     </div>
     <div class="field">
       <label>Did they pay?</label>
@@ -633,8 +630,8 @@ async function loadCustomers(){
     currentUserName=profile.name||user.email.split('@')[0];
   }
 
-  showApp();
   applyRoleUI();
+  showApp();
   initBanner();
   initChips();
   renderDashboard();
@@ -723,7 +720,6 @@ async function renderDashboard(){
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
     <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value red">${unpaid}</div></div>
-    </div>
     <div class="metric"><div class="metric-label">Overdue</div><div class="metric-value amber">${overdue.length}</div></div>`;
 
   const roleLabel=currentUserRole==='admin'?'Admin':'Employee';
@@ -1050,6 +1046,9 @@ function openDoneModal(id){
   document.getElementById('done-modal-customer').textContent=c?c.name:'';
   document.getElementById('done-notes').value='';
   window._paidOnSpot=false;
+  document.getElementById('done-by').value=currentUserName||'Me';
+  document.getElementById('done-by-display').textContent=currentUserName||'Me';
+  
   setTimeout(()=>setPaidOnSpot(false),10);
   document.getElementById('done-modal').classList.add('open');
 }
@@ -1120,6 +1119,7 @@ async function renderHistory(){
 }
 
 function renderHistYearTabs(){
+  if(!document.getElementById('hist-year-tabs'))return;
   const y=new Date().getFullYear();
   document.getElementById('hist-year-tabs').innerHTML=[y,y-1].map(yr=>
     `<button class="chip ${yr===histYear?'active':''}" onclick="setHistYear(${yr})">${yr}</button>`).join('');

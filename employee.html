@@ -1186,7 +1186,7 @@ function openEditScreen(){}
         } else if(event==='SIGNED_OUT'){
           showLogin();customers=[];
         }
-      }catch(e){console.error(e);showLogin();}
+      }catch(e){console.error(e);showLogin();const el=document.getElementById('login-error');if(el){el.textContent='Load error: '+e.message;el.style.display='block';}}
     });
   }catch(e){showLogin();}
 })();

@@ -354,61 +354,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="tab" id="tab-routes">
       <div class="week-tabs" id="week-tabs"></div>
       <div id="routes-list"></div>
-    </div>
-
-    <!-- PAYMENTS -->
-    <div class="tab" id="tab-payments">
-      <div class="metrics" id="pay-metrics"></div>
-      <div class="search-wrap">
-        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="pay-search" placeholder="Search…" oninput="renderPayments()">
-      </div>
-      <div class="filter-row">
-        <button class="chip active" onclick="setPayFilter('',this)">All</button>
-        <button class="chip" onclick="setPayFilter('unpaid',this)">Unpaid</button>
-        <button class="chip" onclick="setPayFilter('paid',this)">Paid</button>
-        <button class="chip" onclick="setPayFilter('overdue',this)">Overdue</button>
-      </div>
-      <div id="payments-list"></div>
-    </div>
-
-    <!-- ADMIN -->
-    <div class="tab" id="tab-admin">
-      <div class="dash-section" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px">
-        <span style="font-weight:600;font-size:15px">Customers</span>
-        <button class="btn btn-blue btn-sm" onclick="openEditScreen(null)">+ Add Customer</button>
-      </div>
-      <div class="dash-section">
-        <div class="dash-title">📊 This month</div>
-        <div class="metrics" id="admin-metrics"></div>
-      </div>
-      <div class="dash-section">
-        <div class="dash-title">👥 Team</div>
-        <div id="admin-users"></div>
-        <div style="margin-top:10px">
-          <div class="dash-title" style="margin-bottom:6px">Invite employee</div>
-          <div style="display:flex;gap:8px">
-            <input id="invite-email" type="email" placeholder="employee@email.com" class="field input" style="flex:1;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
-            <input id="invite-name" type="text" placeholder="Name" style="width:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
-            <button class="btn btn-blue" onclick="inviteEmployee()">Add</button>
-          </div>
-          <div class="field-hint" style="margin-top:6px">They sign up at your site URL with this email — they'll appear as Employee automatically.</div>
-        </div>
-      </div>
-      <div class="dash-section">
-        <div class="dash-title">🏠 All customers summary</div>
-        <div id="admin-route-summary"></div>
-      </div>
-    </div>
-
-    <!-- HISTORY -->
-    <div class="tab" id="tab-history">
-      <div class="metrics" id="hist-metrics"></div>
-      <div class="filter-row" id="hist-year-tabs"></div>
-      <div id="history-list"><div class="empty"><div class="empty-icon">📋</div>No history yet</div></div>
-    </div>
-
-  </div>
+    </div></div>
 
   <nav class="nav">
     <button class="nav-btn active" onclick="showTab('dashboard',this)">
@@ -427,68 +373,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
       Routes
     </button>
-    <button class="nav-btn" onclick="showTab('payments',this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      Pay
-    </button>
-    <button class="nav-btn" onclick="showTab('history',this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      History
-    </button>
-    <button class="nav-btn" id="nav-admin" onclick="showTab('admin',this)" style="display:none">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-      Admin
-    </button>
   </nav>
-</div>
-
-<button class="fab" id="fab-add" onclick="openEditScreen(null)" aria-label="Add customer">+</button>
-
-<!-- FULL-SCREEN ADD / EDIT FORM -->
-<div class="screen" id="edit-screen">
-  <div class="screen-header">
-    <button class="screen-back" onclick="closeEditScreen()">← Back</button>
-    <div class="screen-header-title" id="edit-screen-title">Add customer</div>
-    <button class="screen-back" id="edit-delete-btn" onclick="deleteCustomer()" style="display:none;background:rgba(220,38,38,0.3)">Delete</button>
-  </div>
-  <div class="screen-body">
-    <div class="field-row">
-      <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name" autocomplete="off"></div>
-      <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
-    </div>
-    <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode" autocomplete="off"></div>
-    <div class="field-row">
-      <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44…"></div>
-      <div class="field"><label>WhatsApp</label><input id="f-whatsapp" type="tel" placeholder="if different"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Route</label>
-        <select id="f-route">
-          <option>Keady / Derrynoose</option><option>Armagh</option><option>Clady</option>
-          <option>Kileavy / Dromintee</option><option>Camlough / Bessbrook</option>
-          <option>Newtown</option><option>Cullyhannah</option><option>Crossmaglen</option>
-          <option>Newry</option><option>Forkhill / Mullaghawn</option><option>Poyntzpass / Jerrettspass</option>
-        </select>
-      </div>
-      <div class="field"><label>Frequency</label>
-        <select id="f-freq"><option value="monthly">Monthly</option><option value="2months">Every 2 months</option></select>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>No. of windows</label><input id="f-windows" type="number" placeholder="0" inputmode="numeric"></div>
-      <div class="field"><label>Gate / access code</label><input id="f-gate" type="text" placeholder="e.g. 1234"></div>
-    </div>
-    <div class="field"><label>Directions</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round back…" style="min-height:55px"></textarea></div>
-    <div class="field-row">
-      <div class="field"><label>Stripe link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/…"></div>
-      <div class="field"><label>Revolut link</label><input id="f-revolut" type="url" placeholder="https://revolut.me/…"></div>
-    </div>
-    <div class="field-hint" style="margin-top:-8px;margin-bottom:10px">Add either or both payment links — they'll appear on message templates</div>
-    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notes…" style="min-height:55px"></textarea></div>
-  </div>
-  <div class="screen-footer">
-    <button class="btn btn-full btn-blue" id="save-btn" onclick="saveCustomer()">Save customer</button>
-  </div>
 </div>
 
 <!-- MARK DONE MODAL -->
@@ -757,12 +642,12 @@ async function loadCustomers(){
 }
 
 function applyRoleUI(){
-  if(currentUserRole==='employee'){window.location.replace('employee.html');return;}
-  const isAdmin=currentUserRole==='admin';
+  if(currentUserRole==='admin'){window.location.replace('index.html');return;}
+  const isAdmin=false;
   // FAB — only admin can add customers
-  document.getElementById('fab-add').style.display=isAdmin?'flex':'none';
+  
   // Admin tab in nav
-  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
+  
   // Edit buttons on cards — controlled in renderCustomers
   document.getElementById('header-sub').textContent=
     isAdmin?`Admin · ${customers.length} customers`:`${currentUserName} · Employee`;
@@ -812,7 +697,7 @@ function showTab(t,btn){
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   if(btn)btn.classList.add('active');
-  document.getElementById('fab-add').style.display=((t==='customers'||t==='admin')&&currentUserRole==='admin')?'flex':'none';
+  
   if(t==='dashboard'){renderDashboard();}
   if(t==='customers'){renderCustomers();}
   if(t==='map'){initMap();}
@@ -844,7 +729,7 @@ async function renderDashboard(){
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
     <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value red">${unpaid}</div></div>
-    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${earned}</div></div>
+    </div>
     <div class="metric"><div class="metric-label">Overdue</div><div class="metric-value amber">${overdue.length}</div></div>`;
 
   const roleLabel=currentUserRole==='admin'?'Admin':'Employee';
@@ -913,13 +798,10 @@ function renderCustomers(){
             ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
             ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
           </div>
-          ${owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; Owes &pound;${c.price} from last time</div>`:""}
           ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
-          </button>
+          <span class="badge ${c.paid?'badge-green':'badge-amber'}">${c.paid?'&#10003; Paid':'Unpaid'}</span>
           ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>`:''}
         </div>
       </div>
@@ -938,13 +820,7 @@ function renderCustomers(){
   }).join('');
 }
 
-async function togglePaid(id){
-  const c=customers.find(x=>x.id===id);if(!c)return;
-  c.paid=!c.paid;
-  await db.from('customers').update({paid:c.paid}).eq('id',id);
-  renderCustomers();renderDashboard();
-  showToast(c.paid?'Marked as paid':'Marked as unpaid');
-}
+async 
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
 let routeLine = null;
@@ -1116,25 +992,7 @@ function navigateRoute(){
   window.open(url,'_blank');
 }
 
-async function geocodeAll(){
-  const toFix=customers.filter(c=>c.addr&&c.addr.length>4&&(!c.lat||!c.lng));
-  if(!toFix.length){showToast('All addresses already mapped!');return;}
-  const info=document.getElementById('map-info');
-  showToast(`Mapping ${toFix.length} addresses — please wait…`);
-  let done=0,failed=0;
-  for(const c of toFix){
-    info.innerHTML=`📌 Mapping addresses… ${done}/${toFix.length} done${failed?` · ${failed} failed`:''}`;
-    const coords=await geocode(c.addr);
-    if(coords){
-      c.lat=coords.lat;c.lng=coords.lng;
-      await db.from('customers').update({lat:coords.lat,lng:coords.lng}).eq('id',c.id);
-      done++;
-    } else { failed++; }
-    await new Promise(r=>setTimeout(r,1100)); // Nominatim rate limit: 1/sec
-  }
-  showToast(`Done! ${done} addresses mapped${failed?`, ${failed} couldn't be found`:''}`);
-  addMapMarkers();
-}
+async 
 
 async function geocode(addr){
   if(!addr||addr.length<5)return null;
@@ -1160,13 +1018,9 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length}) · £${earned}/£${total}</span></div>
+      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length})</span></div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
-          <div class="order-btns">
-            ${i>0?`<button class="order-btn" onclick="moveCustomer(${c.id},-1,'${r}')">▲</button>`:'<span style="height:18px;display:block"></span>'}
-            ${i<list.length-1?`<button class="order-btn" onclick="moveCustomer(${c.id},1,'${r}')">▼</button>`:'<span style="height:18px;display:block"></span>'}
-          </div>
           <div class="route-num">${i+1}</div>
           <div class="route-item-info">
             <div class="route-item-name">${esc(c.name)} ${isOverdue(c)?'🔴':''}</div>
@@ -1177,7 +1031,7 @@ function renderRoutes(){
           </div>
           <div class="route-item-actions">
             ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">📞</a>`:''}
-            <button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">£${c.price}${c.paid?' ✓':''}</button>
+            
           </div>
         </div>`).join('')}
       </div>
@@ -1185,86 +1039,15 @@ function renderRoutes(){
   }).join('');
 }
 
-async function moveCustomer(id,dir,route){
-  const list=[...customers.filter(c=>c.route===route)].sort((a,b)=>(a.route_order||999)-(b.route_order||999));
-  const idx=list.findIndex(c=>c.id===id);
-  if(idx<0)return;
-  const newIdx=idx+dir;
-  if(newIdx<0||newIdx>=list.length)return;
-  const tmpOrder=list[idx].route_order;
-  list[idx].route_order=list[newIdx].route_order;
-  list[newIdx].route_order=tmpOrder;
-  await Promise.all([
-    db.from('customers').update({route_order:newIdx}).eq('id',list[idx].id),
-    db.from('customers').update({route_order:idx}).eq('id',list[newIdx].id)
-  ]);
-  renderRoutes();
-}
+async 
 
-async function togglePaidRoute(id,btn){
-  const c=customers.find(x=>x.id===id);if(!c)return;
-  c.paid=!c.paid;
-  await db.from('customers').update({paid:c.paid}).eq('id',id);
-  btn.textContent=`£${c.price}${c.paid?' ✓':''}`;
-  btn.classList.toggle('btn-green',c.paid);
-  showToast(c.paid?'Marked as paid':'Marked as unpaid');
-}
+async 
 
 // ── PAYMENTS ──────────────────────────────────────────────────────────────────
-function renderPayMetrics(){
-  const paid=customers.filter(c=>c.paid),unpaid=customers.filter(c=>!c.paid);
-  const col=paid.reduce((s,c)=>s+Number(c.price),0),owed=unpaid.reduce((s,c)=>s+Number(c.price),0);
-  document.getElementById('pay-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${col}</div></div>
-    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>
-    <div class="metric"><div class="metric-label">Paid</div><div class="metric-value">${paid.length}</div></div>
-    <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value">${unpaid.length}</div></div>`;
-}
-function setPayFilter(f,btn){
-  payFilter=f;
-  document.querySelectorAll('#tab-payments .filter-row .chip').forEach(c=>c.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  renderPayments();
-}
-function renderPayments(){
-  const q=document.getElementById('pay-search').value.toLowerCase();
-  let list=customers.filter(c=>{
-    if(q&&!c.name.toLowerCase().includes(q)&&!c.route.toLowerCase().includes(q))return false;
-    if(payFilter==='paid'&&!c.paid)return false;
-    if(payFilter==='unpaid'&&c.paid)return false;
-    if(payFilter==='overdue'&&!isOverdue(c))return false;
-    return true;
-  });
-  const waNum=c=>c.whatsapp||c.phone;
-  document.getElementById('payments-list').innerHTML=list.map(c=>`
-    <div class="pay-card">
-      <div class="card-top">
-        <div>
-          <div class="card-name">${esc(c.name)} ${isOverdue(c)?'<span class="badge badge-red" style="font-size:10px">OVERDUE</span>':''}</div>
-          <div class="card-addr">${esc(c.route)}</div>
-          ${c.last_cleaned?`<div style="font-size:12px;color:var(--text-muted)">Last done: ${c.last_cleaned}</div>`:''}
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:20px;font-weight:700">£${c.price}</div>
-          <button onclick="togglePaidPay(${c.id})" style="background:none;border:none;cursor:pointer">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'✓ Paid':'Unpaid'}</span>
-          </button>
-        </div>
-      </div>
-      <div class="card-actions" style="margin-top:8px">
-        <button class="btn btn-sm btn-green" onclick="openDoneModal(${c.id})">✅ Mark done</button>
-        ${!c.paid&&waNum(c)?`<a href="https://wa.me/${waNum(c).replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💬 Chase pay</a>`:''}
-        ${!c.paid&&getPayLink(c)?`<a href="${esc(getPayLink(c))}" class="btn btn-sm btn-purple" target="_blank">💳 Pay link</a>`:''}
-      </div>
-    </div>`).join('');
-}
-async function togglePaidPay(id){
-  const c=customers.find(x=>x.id===id);if(!c)return;
-  c.paid=!c.paid;
-  await db.from('customers').update({paid:c.paid}).eq('id',id);
-  renderPayMetrics();renderPayments();
-  showToast(c.paid?'Marked as paid':'Marked as unpaid');
-}
+
+
+
+async 
 
 // ── MARK DONE MODAL ───────────────────────────────────────────────────────────
 function openDoneModal(id){
@@ -1341,12 +1124,7 @@ async function renderHistory(){
     </div>`;
   }).join('');
 }
-function renderHistMetrics(h){
-  const total=h.reduce((s,j)=>s+Number(j.price||0),0);
-  document.getElementById('hist-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">${histYear} Earnings</div><div class="metric-value green">£${total}</div></div>
-    <div class="metric"><div class="metric-label">Jobs Done</div><div class="metric-value blue">${h.length}</div></div>`;
-}
+
 function renderHistYearTabs(){
   const y=new Date().getFullYear();
   document.getElementById('hist-year-tabs').innerHTML=[y,y-1].map(yr=>
@@ -1376,200 +1154,19 @@ No rush, whenever you get a chance! Thanks 🪣`;
 }
 
 // ── EDIT SCREEN ───────────────────────────────────────────────────────────────
-function openEditScreen(id){
-  editingId=id;
-  const screen=document.getElementById('edit-screen');
-  const delBtn=document.getElementById('edit-delete-btn');
-  if(id){
-    const c=customers.find(x=>x.id===id);
-    document.getElementById('edit-screen-title').textContent='Edit customer';
-    delBtn.style.display='block';
-    document.getElementById('f-name').value=c.name;
-    document.getElementById('f-addr').value=c.addr||'';
-    document.getElementById('f-phone').value=c.phone||'';
-    document.getElementById('f-whatsapp').value=c.whatsapp||'';
-    document.getElementById('f-route').value=c.route;
-    document.getElementById('f-freq').value=c.freq;
-    document.getElementById('f-price').value=c.price;
-    document.getElementById('f-windows').value=c.windows_count||'';
-    document.getElementById('f-gate').value=c.gate_code||'';
-    document.getElementById('f-directions').value=c.directions||'';
-    document.getElementById('f-stripe').value=c.stripe_link||'';
-    document.getElementById('f-revolut').value=c.revolut_link||'';
-    document.getElementById('f-notes').value=c.notes||'';
-  } else {
-    document.getElementById('edit-screen-title').textContent='Add customer';
-    delBtn.style.display='none';
-    ['name','addr','phone','whatsapp','notes','directions','gate','stripe','revolut'].forEach(f=>{
-      const el=document.getElementById('f-'+f);if(el)el.value='';
-    });
-    document.getElementById('f-price').value=20;
-    document.getElementById('f-windows').value='';
-    document.getElementById('f-route').selectedIndex=0;
-    document.getElementById('f-freq').selectedIndex=0;
-  }
-  screen.style.display='flex';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>screen.classList.add('open')));
-}
-function closeEditScreen(){
-  const screen=document.getElementById('edit-screen');
-  screen.classList.remove('open');
-  setTimeout(()=>{screen.style.display='none';},260);
-}
 
-async function saveCustomer(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name){showToast('Please enter a name');return;}
-  const btn=document.getElementById('save-btn');
-  btn.textContent='Saving…';btn.disabled=true;
-  const addr=document.getElementById('f-addr').value.trim();
-  const data={
-    name,addr,
-    phone:document.getElementById('f-phone').value.trim(),
-    whatsapp:document.getElementById('f-whatsapp').value.trim(),
-    route:document.getElementById('f-route').value,
-    freq:document.getElementById('f-freq').value,
-    price:parseFloat(document.getElementById('f-price').value)||20,
-    windows_count:parseInt(document.getElementById('f-windows').value)||0,
-    gate_code:document.getElementById('f-gate').value.trim(),
-    directions:document.getElementById('f-directions').value.trim(),
-    stripe_link:document.getElementById('f-stripe').value.trim(),
-    revolut_link:document.getElementById('f-revolut').value.trim(),
-    notes:document.getElementById('f-notes').value.trim()
-  };
-  try{
-    let savedId=editingId;
-    if(editingId){
-      const {error}=await db.from('customers').update(data).eq('id',editingId);
-      if(error)throw error;
-      Object.assign(customers.find(x=>x.id===editingId),data);
-    } else {
-      const {data:newC,error}=await db.from('customers').insert({...data,paid:false,last_cleaned:'',route_order:999}).select().single();
-      if(error)throw error;
-      customers.push(newC);
-      savedId=newC.id;
-    }
-    btn.textContent='Save customer';btn.disabled=false;
-    closeEditScreen();
-    renderCustomers();renderDashboard();
-    showToast(editingId?'Customer updated ✓':'Customer added ✓');
-    // geocode in background after save — doesn't block the UI
-    if(addr&&savedId){
-      geocode(addr).then(coords=>{
-        if(coords){
-          db.from('customers').update({lat:coords.lat,lng:coords.lng}).eq('id',savedId);
-          const c=customers.find(x=>x.id===savedId);
-          if(c){c.lat=coords.lat;c.lng=coords.lng;}
-        }
-      }).catch(()=>{});
-    }
-  }catch(err){
-    btn.textContent='Save customer';btn.disabled=false;
-    showToast('Error: '+(err.message||'Could not save'));
-  }
-}
-async function deleteCustomer(){
-  if(!confirm('Delete this customer? This cannot be undone.'))return;
-  await db.from('customers').delete().eq('id',editingId);
-  customers=customers.filter(x=>x.id!==editingId);
-  closeEditScreen();renderCustomers();renderDashboard();
-  showToast('Customer deleted');
-}
+
+
+async 
+async 
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
-async function renderAdmin(){
-  // Monthly stats from cleaning_history
-  const now=new Date();
-  const monthStart=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-  const {data:jobs}=await db.from('cleaning_history')
-    .select('*,customers(name,route,price,paid)')
-    .gte('cleaned_date',monthStart);
+async 
 
-  const jobsDone=(jobs||[]).length;
-  const earned=(jobs||[]).reduce((s,j)=>s+Number(j.price||0),0);
-  const paid=customers.filter(c=>c.paid).length;
-  const unpaid=customers.filter(c=>!c.paid).length;
-  const owed=customers.filter(c=>!c.paid).reduce((s,c)=>s+Number(c.price),0);
+async 
 
-  document.getElementById('admin-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Jobs this month</div><div class="metric-value blue">${jobsDone}</div></div>
-    <div class="metric"><div class="metric-label">Earned this month</div><div class="metric-value green">£${earned}</div></div>
-    <div class="metric"><div class="metric-label">Customers paid</div><div class="metric-value green">${paid}</div></div>
-    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>`;
-
-  // By-employee breakdown
-  const byEmp={};
-  (jobs||[]).forEach(j=>{
-    const who=j.done_by||'Unknown';
-    if(!byEmp[who])byEmp[who]={jobs:0,earned:0};
-    byEmp[who].jobs++;byEmp[who].earned+=Number(j.price||0);
-  });
-  const empRows=Object.entries(byEmp).map(([name,s])=>
-    `<div class="route-item"><div class="route-item-info"><div class="route-item-name">${esc(name)}</div><div class="route-item-addr">${s.jobs} jobs · £${s.earned} earned this month</div></div></div>`
-  ).join('');
-
-  // Users list
-  const {data:profiles}=await db.from('profiles').select('*').order('created_at');
-  const userRows=(profiles||[]).map(p=>`
-    <div class="route-item">
-      <div class="route-item-info">
-        <div class="route-item-name">${esc(p.name||p.email)}</div>
-        <div class="route-item-addr">${esc(p.email||'')} · ${p.role}</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        ${p.role==='employee'?`<button class="btn btn-sm btn-blue" onclick="setRole('${p.id}','admin')">Make admin</button>`:`<button class="btn btn-sm" onclick="setRole('${p.id}','employee')">Make employee</button>`}
-      </div>
-    </div>`).join('');
-
-  document.getElementById('admin-users').innerHTML=`
-    <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px;margin-bottom:8px">
-      ${userRows||'<div style="padding:12px;color:var(--text-muted)">No users yet</div>'}
-    </div>
-    ${empRows?`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px"><div style="padding:10px 0 4px;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase">This month by employee</div>${empRows}</div>`:''}`;
-
-  // Route summary
-  document.getElementById('admin-route-summary').innerHTML=`
-    <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
-    ${ROUTES.map(r=>{
-      const list=customers.filter(c=>c.route===r);
-      const paidC=list.filter(c=>c.paid);
-      const owed=list.filter(c=>!c.paid).reduce((s,c)=>s+Number(c.price),0);
-      return`<div class="route-item">
-        <div class="route-item-info">
-          <div class="route-item-name">${esc(r)}</div>
-          <div class="route-item-addr">${list.length} customers · ${paidC.length} paid${owed?` · <span style="color:var(--red)">£${owed} owed</span>`:' · all paid '}</div>
-        </div>
-        <button class="btn btn-sm btn-amber" onclick="newCycle('${r.replace(/\x27/g,"")}')">New Cycle</button>
-      </div>`;
-    }).join('')}
-    </div>`;
-}
-
-async function setRole(userId, role){
-  await db.from('profiles').update({role}).eq('id',userId);
-  showToast(`Role updated to ${role}`);
-  renderAdmin();
-}
-
-async function newCycle(route){
-  const list=customers.filter(c=>c.route===route&&c.paid);
-  if(!list.length){showToast('No paid customers on this route');return;}
-  if(!confirm(`Start new cycle for ${route}? This will mark all ${list.length} paid customers as unpaid ready for next round. History is preserved.`))return;
-  for(const c of list){
-    c.paid=false;
-    await db.from('customers').update({paid:false}).eq('id',c.id);
-  }
-  renderCustomers();renderPayments();renderDashboard();renderAdmin();
-  showToast(`New cycle started for ${route} - ${list.length} customers reset`);
-}
-async function inviteEmployee(){
-  const email=document.getElementById('invite-email').value.trim();
-  const name=document.getElementById('invite-name').value.trim();
-  if(!email){showToast('Enter an email address');return;}
-  showToast((name||email)+' — ask them to sign up at the site and you can set their role in Supabase.');
-  document.getElementById('invite-email').value='';
-  document.getElementById('invite-name').value='';
-}
+async 
+async 
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

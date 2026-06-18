@@ -703,9 +703,7 @@ function showTab(t,btn){
   if(t==='map'){initMap();}
   else{hideStopCard();}
   if(t==='routes'){renderWeekTabs();renderRoutes();}
-  if(t==='payments'){renderPayMetrics();renderPayments();}
-  if(t==='history'){renderHistory();}
-  if(t==='admin'){renderAdmin();}
+
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -715,11 +713,7 @@ async function renderDashboard(){
   const total=customers.length;
   const unpaid=customers.filter(c=>!c.paid).length;
   const overdue=customers.filter(isOverdue);
-  // Earnings from cleaning_history this month � survives cycle resets
-  const now=new Date();
-  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
-  const {data:thisMonthJobs}=await db.from('cleaning_history').select('price').gte('cleaned_date',monthStart);
-  const earned=(thisMonthJobs||[]).reduce((s,j)=>s+Number(j.price),0);
+  
 
   document.getElementById('dash-week-card').innerHTML=`
     <div class="dash-week-label">This week you're on</div>
@@ -888,14 +882,14 @@ function addMapMarkers(){
     info.classList.add('show');
     const missingCount = missing.length;
     info.innerHTML = `📍 <b>${withCoords.length}</b> of ${list.length} stops on map
-      ${missingCount?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${missingCount} missing locations</button>`:''}
+      ''
       <br>🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
     if(routeStops.length){currentStopIdx=0;showStop(0);}
   } else {
     const allMissing=customers.filter(c=>c.addr&&(!c.lat||!c.lng)).length;
     info.classList.add('show');
     info.innerHTML=`${customers.filter(c=>c.lat&&c.lng).length} of ${customers.length} customers on map
-      ${allMissing?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${allMissing} missing</button>`:''}`;
+      ''`;
     hideStopCard();
   }
 }
@@ -1079,7 +1073,7 @@ async function confirmDone(){
   c.last_cleaned=today;
   await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
   closeDoneModal();
-  renderCustomers();renderPayments();renderDashboard();
+  renderCustomers();renderDashboard();
     showToast(paidNow?`Done + paid: ${c.name}`:`Done: ${c.name}`);
 }
 document.getElementById('done-modal').addEventListener('click',function(e){if(e.target===this)closeDoneModal();});
@@ -1093,9 +1087,9 @@ async function renderHistory(){
     .order('cleaned_date',{ascending:false});
   if(!history||!history.length){
     document.getElementById('history-list').innerHTML='<div class="empty"><div class="empty-icon">📋</div>No history for '+histYear+'</div>';
-    renderHistMetrics([]);renderHistYearTabs();return;
+    renderHistYearTabs();return;
   }
-  renderHistMetrics(history);renderHistYearTabs();
+  renderHistYearTabs();
   const byMonth={};
   history.forEach(h=>{
     const [yr,mo]=h.cleaned_date.split('-');
@@ -1192,6 +1186,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch
       }
     });
   }catch(e){showLogin();}
+function openEditScreen(){}
 })();
 </script>
 </body>

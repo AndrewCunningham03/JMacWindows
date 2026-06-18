@@ -923,34 +923,47 @@ async function renderDashboard(){
 
   const el=document.getElementById('dash-overdue');
   if(!overdue.length){el.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">✅ All customers are up to date!</div>';return;}
+  // Most overdue first; never-cleaned (null) treated as most urgent
+  const sorted=[...overdue].sort((a,b)=>((daysSinceCleaned(b)??99999)-(daysSinceCleaned(a)??99999)));
+  const shown=sorted.slice(0,5);
+  const extra=sorted.length-shown.length;
   el.innerHTML=`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
-    ${overdue.map(c=>{
+    ${shown.map(c=>{
       const days=daysSinceCleaned(c);
       return`<div class="overdue-item">
         <div>
           <div class="overdue-name">${esc(c.name)}</div>
           <div class="overdue-meta">${esc(c.route)} · ${c.freq==='monthly'?'Monthly':'2-month'}</div>
         </div>
-        <span class="overdue-days">${days}d ago</span>
+        <span class="overdue-days">${days===null?'Never':days+'d ago'}</span>
       </div>`;
     }).join('')}
-  </div>`;
+  </div>
+  ${extra>0?`<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:8px 0">+ ${extra} more overdue</div>`:''}`;
 }
 
 function renderTodayRound(){
   const wkRoutes=WEEKS[getCurrentWeek()]||[];
+  const todayStr=new Date().toLocaleDateString('en-GB');
+  if(!todayRoute){const saved=localStorage.getItem('todayRoute');if(saved&&wkRoutes.includes(saved))todayRoute=saved;}
   if(!wkRoutes.includes(todayRoute))todayRoute=wkRoutes[0]||'';
   const chipEl=document.getElementById('today-route-chips');
-  chipEl.innerHTML=wkRoutes.map(r=>`<button class="chip ${r===todayRoute?'active':''}" onclick="setTodayRoute('${r.replace(/'/g,"\\'")}')">${esc(r)}</button>`).join('');
+  chipEl.innerHTML=wkRoutes.map(r=>{
+    const rl=customers.filter(c=>c.route===r);
+    const rd=rl.filter(c=>c.last_cleaned===todayStr).length;
+    const complete=rl.length&&rd===rl.length;
+    return`<button class="chip ${r===todayRoute?'active':''}" onclick="setTodayRoute('${r.replace(/'/g,"\\'")}')">${complete?'✓ ':''}${esc(r)}${rl.length?` (${rd}/${rl.length})`:''}</button>`;
+  }).join('');
   const el=document.getElementById('today-round');
   if(!todayRoute){el.innerHTML='<div class="empty" style="padding:20px"><div class="empty-icon">📭</div>No routes scheduled this week</div>';return;}
   const list=[...customers.filter(c=>c.route===todayRoute)].sort((a,b)=>(a.route_order||999)-(b.route_order||999));
   if(!list.length){el.innerHTML='<div class="empty" style="padding:20px">No customers on this route yet</div>';return;}
-  const todayStr=new Date().toLocaleDateString('en-GB');
   const doneCount=list.filter(c=>c.last_cleaned===todayStr).length;
+  const allDone=doneCount===list.length;
+  const collectedToday=list.filter(c=>c.last_cleaned===todayStr&&c.paid&&currentUserRole==='admin').reduce((s,c)=>s+Number(c.price||0),0);
   el.innerHTML=`
-    <button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${doneCount} of ${list.length} done today</div>
+    ${allDone?`<div style="background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:16px;text-align:center;font-weight:700;margin-bottom:12px">🎉 ${esc(todayRoute)} all done!${currentUserRole==='admin'&&collectedToday?`<div style="font-weight:600;font-size:13px;margin-top:4px">£${collectedToday} collected today</div>`:''}</div>`:`<button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${doneCount} of ${list.length} done today</div>`}
     ${list.map((c,i)=>{
       const done=c.last_cleaned===todayStr;
       const waNum=c.whatsapp||c.phone;
@@ -967,7 +980,7 @@ function renderTodayRound(){
       </div>`;
     }).join('')}`;
 }
-function setTodayRoute(r){todayRoute=r;renderTodayRound();}
+function setTodayRoute(r){todayRoute=r;try{localStorage.setItem('todayRoute',r);}catch(e){}renderTodayRound();}
 function navigateRouteByName(route){
   const list=[...customers.filter(c=>c.route===route&&c.addr)].sort((a,b)=>(a.route_order||999)-(b.route_order||999));
   if(!list.length){showToast('No addresses on this route');return;}

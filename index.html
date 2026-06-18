@@ -740,9 +740,13 @@ async function loadCustomers(){
   if(user){
     let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
     if(!profile){
-      // First login — create profile as employee, role set in Supabase dashboard
-      const newProfile={id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'};
+      // First login — check if admin pre-added this email in pending_employees
+      const {data:pending}=await db.from('pending_employees').select('*').eq('email',user.email).maybeSingle();
+      const assignedRole=pending?.role||'employee';
+      const assignedName=pending?.name||user.email.split('@')[0];
+      const newProfile={id:user.id,email:user.email,name:assignedName,role:assignedRole};
       await db.from('profiles').insert(newProfile);
+      if(pending) await db.from('pending_employees').delete().eq('email',user.email);
       profile=newProfile;
     }
     currentUserRole=profile.role||'employee';
@@ -1566,11 +1570,24 @@ async function inviteEmployee(){
   const email=document.getElementById('invite-email').value.trim();
   const name=document.getElementById('invite-name').value.trim();
   if(!email){showToast('Enter an email address');return;}
-  // Pre-create a profile row so when they sign up they get the right name
-  // (Supabase will link by user ID on first login)
-  showToast(`Tell ${name||email} to sign up at your site — they'll appear here automatically`);
-  document.getElementById('invite-email').value='';
-  document.getElementById('invite-name').value='';
+  if(!name){showToast('Enter a name');return;}
+  const btn=document.querySelector('[onclick="inviteEmployee()"]');
+  if(btn){btn.disabled=true;btn.textContent='Adding...';}
+  try{
+    const {error}=await db.from('pending_employees').insert({email,name,role:'employee'});
+    if(error){
+      if(error.code==='23505'){showToast(name+' is already added');}
+      else throw error;
+    } else {
+      showToast(name+' added! They can sign up at the site and will get employee access.');
+      document.getElementById('invite-email').value='';
+      document.getElementById('invite-name').value='';
+    }
+  }catch(err){
+    showToast('Error: '+(err.message||'Could not add employee'));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Add';}
+  }
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
@@ -1587,12 +1604,14 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{
   try{
-    const {data:{session}}=await db.auth.getSession();
-    if(session){await loadCustomers();}else{showLogin();}
     db.auth.onAuthStateChange(async(event,session)=>{
-      // INITIAL_SESSION fires immediately and duplicates the getSession() call above — skip it
-      if(event==='INITIAL_SESSION')return;
-      if(session){await loadCustomers();}else{showLogin();customers=[];}
+      if(event==='INITIAL_SESSION'){
+        if(session){await loadCustomers();}else{showLogin();}
+      } else if(event==='SIGNED_IN'){
+        await loadCustomers();
+      } else if(event==='SIGNED_OUT'){
+        showLogin();customers=[];
+      }
     });
   }catch(e){showLogin();}
 })();

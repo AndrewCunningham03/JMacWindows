@@ -1368,10 +1368,16 @@ function getPayLink(c){
 function getMsg(c,type){
   const first=c.name.split(' ')[0];
   const link=getPayLink(c);
-  const payLine=link?`\nPay here: ${link}`:``;
-  if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
-  if(type==='after')return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you.${payLine}\nThanks a million! 🪣`;
-  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
+  const payLine=link?`
+Pay here: ${link}`:``;
+  if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows soon. See you then! 🪣`;
+  if(type==='after'){
+    if(c.paid)return`Hi ${first}! All done — your windows are sparkling clean! 💧 Thanks so much, all sorted! 🪣`;
+    return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you.${payLine}
+Thanks a million! 🪣`;
+  }
+  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}
+No rush, whenever you get a chance! Thanks 🪣`;
 }
 
 // ── EDIT SCREEN ───────────────────────────────────────────────────────────────

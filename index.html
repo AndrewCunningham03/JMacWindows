@@ -260,12 +260,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <!-- LOGIN -->
 <div id="login-screen" class="show">
   <div class="login-box">
-    <div class="login-logo">ðŸª£</div>
+    <div class="login-logo">🪣</div>
     <div class="login-title">Window Rounds</div>
     <div class="login-sub">JMac Window Cleaning</div>
     <div id="login-error"></div>
     <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
-    <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="btn btn-blue btn-full" onclick="login()" style="font-size:15px;padding:12px;margin-top:4px">Sign In</button>
   </div>
 </div>
@@ -273,15 +273,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <!-- LOADING -->
 <div id="loading-screen">
   <div class="spinner"></div>
-  <div style="color:var(--text-muted);font-size:14px">Loading your customersâ€¦</div>
+  <div style="color:var(--text-muted);font-size:14px">Loading your customers…</div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="header">
     <div>
-      <div class="header-title">ðŸª£ Window Rounds</div>
-      <div class="header-sub" id="header-sub">Loadingâ€¦</div>
+      <div class="header-title">🪣 Window Rounds</div>
+      <div class="header-sub" id="header-sub">Loading…</div>
     </div>
     <div class="header-right">
       <span class="header-week" id="header-week"></span>
@@ -300,7 +300,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div class="dash-week-card" id="dash-week-card"></div>
       <div class="metrics" id="dash-metrics"></div>
       <div class="dash-section">
-        <div class="dash-title">âš ï¸ Overdue customers</div>
+        <div class="dash-title">⚠️ Overdue customers</div>
         <div id="dash-overdue"></div>
       </div>
     </div>
@@ -309,7 +309,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="tab" id="tab-customers">
       <div class="search-wrap">
         <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="search" placeholder="Search name or addressâ€¦" oninput="renderCustomers()">
+        <input type="search" id="search" placeholder="Search name or address…" oninput="renderCustomers()">
       </div>
       <div class="filter-row" id="route-chips"></div>
       <div class="filter-row" id="cust-filter-row">
@@ -326,8 +326,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="tab" id="tab-map">
       <div class="map-filter" id="map-filter-row"></div>
       <div class="map-toolbar" id="map-toolbar" style="display:none">
-        <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">ðŸ—ºï¸ Open in Google Maps</button>
-        <button class="btn btn-sm" onclick="clearRouteMode()">âœ•</button>
+        <button class="btn btn-blue btn-sm" onclick="navigateRoute()" style="flex:1;justify-content:center">🗺️ Open in Google Maps</button>
+        <button class="btn btn-sm" onclick="clearRouteMode()">✕</button>
       </div>
       <div class="map-info" id="map-info"></div>
       <div id="map"></div>
@@ -337,8 +337,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
         <div class="stop-card-nav">
           <div class="stop-counter" id="stop-counter">Stop 1 of 1</div>
           <div class="stop-nav-btns">
-            <button class="stop-nav-btn" onclick="prevStop()">â† Prev</button>
-            <button class="stop-nav-btn" onclick="nextStop()">Next â†’</button>
+            <button class="stop-nav-btn" onclick="prevStop()">← Prev</button>
+            <button class="stop-nav-btn" onclick="nextStop()">Next →</button>
           </div>
         </div>
         <div class="stop-card-body">
@@ -361,7 +361,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div class="metrics" id="pay-metrics"></div>
       <div class="search-wrap">
         <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="pay-search" placeholder="Searchâ€¦" oninput="renderPayments()">
+        <input type="search" id="pay-search" placeholder="Search…" oninput="renderPayments()">
       </div>
       <div class="filter-row">
         <button class="chip active" onclick="setPayFilter('',this)">All</button>
@@ -375,11 +375,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <!-- ADMIN -->
     <div class="tab" id="tab-admin">
       <div class="dash-section">
-        <div class="dash-title">ðŸ“Š This month</div>
+        <div class="dash-title">📊 This month</div>
         <div class="metrics" id="admin-metrics"></div>
       </div>
       <div class="dash-section">
-        <div class="dash-title">ðŸ‘¥ Team</div>
+        <div class="dash-title">👥 Team</div>
         <div id="admin-users"></div>
         <div style="margin-top:10px">
           <div class="dash-title" style="margin-bottom:6px">Invite employee</div>
@@ -388,11 +388,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
             <input id="invite-name" type="text" placeholder="Name" style="width:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:15px;outline:none">
             <button class="btn btn-blue" onclick="inviteEmployee()">Add</button>
           </div>
-          <div class="field-hint" style="margin-top:6px">They sign up at your site URL with this email â€” they'll appear as Employee automatically.</div>
+          <div class="field-hint" style="margin-top:6px">They sign up at your site URL with this email — they'll appear as Employee automatically.</div>
         </div>
       </div>
       <div class="dash-section">
-        <div class="dash-title">ðŸ  All customers summary</div>
+        <div class="dash-title">🏠 All customers summary</div>
         <div id="admin-route-summary"></div>
       </div>
     </div>
@@ -401,7 +401,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="tab" id="tab-history">
       <div class="metrics" id="hist-metrics"></div>
       <div class="filter-row" id="hist-year-tabs"></div>
-      <div id="history-list"><div class="empty"><div class="empty-icon">ðŸ“‹</div>No history yet</div></div>
+      <div id="history-list"><div class="empty"><div class="empty-icon">📋</div>No history yet</div></div>
     </div>
 
   </div>
@@ -439,18 +439,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <!-- FULL-SCREEN ADD / EDIT FORM -->
 <div class="screen" id="edit-screen">
   <div class="screen-header">
-    <button class="screen-back" onclick="closeEditScreen()">â† Back</button>
+    <button class="screen-back" onclick="closeEditScreen()">← Back</button>
     <div class="screen-header-title" id="edit-screen-title">Add customer</div>
     <button class="screen-back" id="edit-delete-btn" onclick="deleteCustomer()" style="display:none;background:rgba(220,38,38,0.3)">Delete</button>
   </div>
   <div class="screen-body">
     <div class="field-row">
       <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name" autocomplete="off"></div>
-      <div class="field"><label>Price (Â£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
+      <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
     </div>
     <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode" autocomplete="off"></div>
     <div class="field-row">
-      <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44â€¦"></div>
+      <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="+44…"></div>
       <div class="field"><label>WhatsApp</label><input id="f-whatsapp" type="tel" placeholder="if different"></div>
     </div>
     <div class="field-row">
@@ -470,13 +470,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <div class="field"><label>No. of windows</label><input id="f-windows" type="number" placeholder="0" inputmode="numeric"></div>
       <div class="field"><label>Gate / access code</label><input id="f-gate" type="text" placeholder="e.g. 1234"></div>
     </div>
-    <div class="field"><label>Directions</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round backâ€¦" style="min-height:55px"></textarea></div>
+    <div class="field"><label>Directions</label><textarea id="f-directions" placeholder="e.g. turn left at green gate, go round back…" style="min-height:55px"></textarea></div>
     <div class="field-row">
-      <div class="field"><label>Stripe link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/â€¦"></div>
-      <div class="field"><label>Revolut link</label><input id="f-revolut" type="url" placeholder="https://revolut.me/â€¦"></div>
+      <div class="field"><label>Stripe link</label><input id="f-stripe" type="url" placeholder="https://buy.stripe.com/…"></div>
+      <div class="field"><label>Revolut link</label><input id="f-revolut" type="url" placeholder="https://revolut.me/…"></div>
     </div>
-    <div class="field-hint" style="margin-top:-8px;margin-bottom:10px">Add either or both payment links â€” they'll appear on message templates</div>
-    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notesâ€¦" style="min-height:55px"></textarea></div>
+    <div class="field-hint" style="margin-top:-8px;margin-bottom:10px">Add either or both payment links — they'll appear on message templates</div>
+    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notes…" style="min-height:55px"></textarea></div>
   </div>
   <div class="screen-footer">
     <button class="btn btn-full btn-blue" id="save-btn" onclick="saveCustomer()">Save customer</button>
@@ -496,11 +496,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       </select>
     </div>
     <div class="field"><label>Visit notes (optional)</label>
-      <textarea id="done-notes" placeholder="e.g. back gate was locked, did front onlyâ€¦"></textarea>
+      <textarea id="done-notes" placeholder="e.g. back gate was locked, did front only…"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeDoneModal()">Cancel</button>
-      <button class="btn btn-green" onclick="confirmDone()">âœ… Mark done</button>
+      <button class="btn btn-green" onclick="confirmDone()">✅ Mark done</button>
     </div>
   </div>
 </div>
@@ -511,13 +511,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
-// â”€â”€ CONFIG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CONFIG ────────────────────────────────────────────────────────────────────
 const SUPABASE_URL  = 'https://xkcottkbmjlvqempqlsx.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_OKoXX-AnIf1ci3yfzwg7DQ_Pygnu4rk';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const ROUTES = ["Keady / Derrynoose","Armagh","Clady","Kileavy / Dromintee","Camlough / Bessbrook","Newtown","Cullyhannah","Crossmaglen","Newry","Forkhill / Mullaghawn","Poyntzpass / Jerrettspass"];
 const WEEKS = {
   "Week 1":["Keady / Derrynoose","Armagh","Clady","Kileavy / Dromintee"],
@@ -526,7 +526,7 @@ const WEEKS = {
   "Week 4":["Newry","Forkhill / Mullaghawn","Poyntzpass / Jerrettspass","Keady / Derrynoose"]
 };
 
-// â”€â”€ STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── STATE ─────────────────────────────────────────────────────────────────────
 let customers = [];
 let activeTab = 'dashboard';
 let activeWeek = 'Week 1';
@@ -542,7 +542,7 @@ let currentUserEmail = '';
 let currentUserRole = 'employee'; // 'admin' or 'employee'
 let currentUserName = '';
 
-// â”€â”€ SEED DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SEED DATA ─────────────────────────────────────────────────────────────────
 const SEED = [
   {name:"Paula Beggan",addr:"Keady",phone:"+447493204539",route:"Keady / Derrynoose",freq:"monthly",price:25,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
   {name:"Suzanne McKeever",addr:"2 The Oaks Derrynoose",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
@@ -689,7 +689,7 @@ const SEED = [
   {name:"JP Transport",addr:"43A Legananny Road Loughbrickland BT32 3QR",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
 ];
 
-// â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── AUTH ──────────────────────────────────────────────────────────────────────
 async function login(){
   const email=document.getElementById('login-email').value.trim();
   const pwd=document.getElementById('login-password').value;
@@ -707,7 +707,7 @@ function showLogin(){document.getElementById('login-screen').classList.add('show
 function showLoading(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.add('show');document.getElementById('app').classList.remove('show');}
 function showApp(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.add('show');}
 
-// â”€â”€ DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadCustomers(){
   showLoading();
   // Load customers
@@ -725,7 +725,7 @@ async function loadCustomers(){
   if(user){
     let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
     if(!profile){
-      // First login â€” create profile
+      // First login — create profile
       await db.from('profiles').insert({id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'});
       // Auto-promote if it's the admin email
       if(user.email==='andrewcunningham9911@gmail.com'){
@@ -749,16 +749,16 @@ async function loadCustomers(){
 
 function applyRoleUI(){
   const isAdmin=currentUserRole==='admin';
-  // FAB â€” only admin can add customers
+  // FAB — only admin can add customers
   document.getElementById('fab-add').style.display=isAdmin?'flex':'none';
   // Admin tab in nav
   document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
-  // Edit buttons on cards â€” controlled in renderCustomers
+  // Edit buttons on cards — controlled in renderCustomers
   document.getElementById('header-sub').textContent=
-    isAdmin?`Admin Â· ${customers.length} customers`:`${currentUserName} Â· Employee`;
+    isAdmin?`Admin · ${customers.length} customers`:`${currentUserName} · Employee`;
 }
 
-// â”€â”€ WEEK / BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── WEEK / BANNER ─────────────────────────────────────────────────────────────
 function getCurrentWeek(){
   const d=new Date().getDate();
   if(d<=7)return'Week 1';if(d<=14)return'Week 2';if(d<=21)return'Week 3';return'Week 4';
@@ -768,12 +768,12 @@ function initBanner(){
   activeWeek=wk;
   const routes=WEEKS[wk];
   const dateStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('today-date').textContent='ðŸ“… '+dateStr;
-  document.getElementById('today-routes').textContent=wk+' Â· '+routes.slice(0,2).join(', ')+(routes.length>2?'â€¦':'');
+  document.getElementById('today-date').textContent='📅 '+dateStr;
+  document.getElementById('today-routes').textContent=wk+' · '+routes.slice(0,2).join(', ')+(routes.length>2?'…':'');
   document.getElementById('header-week').textContent=wk;
 }
 
-// â”€â”€ OVERDUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── OVERDUE ───────────────────────────────────────────────────────────────────
 function daysSinceCleaned(c){
   if(!c.last_cleaned)return null;
   const parts=c.last_cleaned.split('/');
@@ -795,7 +795,7 @@ function owesFromLastTime(c){
   return cleaned.getFullYear()<now.getFullYear()||(cleaned.getFullYear()===now.getFullYear()&&cleaned.getMonth()<now.getMonth());
 }
 
-// â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(t,btn){
   activeTab=t;
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
@@ -813,14 +813,14 @@ function showTab(t,btn){
   if(t==='admin'){renderAdmin();}
 }
 
-// â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 async function renderDashboard(){
   const wk=getCurrentWeek();
   const wkRoutes=WEEKS[wk];
   const total=customers.length;
   const unpaid=customers.filter(c=>!c.paid).length;
   const overdue=customers.filter(isOverdue);
-  // Earnings from cleaning_history this month — survives cycle resets
+  // Earnings from cleaning_history this month � survives cycle resets
   const now=new Date();
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
   const {data:thisMonthJobs}=await db.from('cleaning_history').select('price').gte('cleaned_date',monthStart);
@@ -829,26 +829,26 @@ async function renderDashboard(){
   document.getElementById('dash-week-card').innerHTML=`
     <div class="dash-week-label">This week you're on</div>
     <div class="dash-week-name">${wk}</div>
-    <div class="dash-week-routes">${wkRoutes.map(r=>'ðŸ“ '+r).join('<br>')}</div>`;
+    <div class="dash-week-routes">${wkRoutes.map(r=>'📍 '+r).join('<br>')}</div>`;
 
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Customers</div><div class="metric-value blue">${total}</div></div>
     <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value red">${unpaid}</div></div>
-    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">Â£${earned}</div></div>
+    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${earned}</div></div>
     <div class="metric"><div class="metric-label">Overdue</div><div class="metric-value amber">${overdue.length}</div></div>`;
 
   const roleLabel=currentUserRole==='admin'?'Admin':'Employee';
-  document.getElementById('header-sub').textContent=`${roleLabel} Â· ${total} customers Â· ${unpaid} unpaid`;
+  document.getElementById('header-sub').textContent=`${roleLabel} · ${total} customers · ${unpaid} unpaid`;
 
   const el=document.getElementById('dash-overdue');
-  if(!overdue.length){el.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">âœ… All customers are up to date!</div>';return;}
+  if(!overdue.length){el.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">✅ All customers are up to date!</div>';return;}
   el.innerHTML=`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
     ${overdue.map(c=>{
       const days=daysSinceCleaned(c);
       return`<div class="overdue-item">
         <div>
           <div class="overdue-name">${esc(c.name)}</div>
-          <div class="overdue-meta">${esc(c.route)} Â· ${c.freq==='monthly'?'Monthly':'2-month'}</div>
+          <div class="overdue-meta">${esc(c.route)} · ${c.freq==='monthly'?'Monthly':'2-month'}</div>
         </div>
         <span class="overdue-days">${days}d ago</span>
       </div>`;
@@ -856,7 +856,7 @@ async function renderDashboard(){
   </div>`;
 }
 
-// â”€â”€ CHIPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CHIPS ─────────────────────────────────────────────────────────────────────
 function initChips(){
   const el=document.getElementById('route-chips');
   el.innerHTML='<button class="chip active" onclick="setRoute(\'\',this)">All</button>'+
@@ -875,7 +875,7 @@ function setCustFilter(f,btn){
   renderCustomers();
 }
 
-// â”€â”€ CUSTOMERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CUSTOMERS ─────────────────────────────────────────────────────────────────
 function renderCustomers(){
   const q=document.getElementById('search').value.toLowerCase();
   let list=customers.filter(c=>{
@@ -888,7 +888,7 @@ function renderCustomers(){
     return true;
   });
   const el=document.getElementById('customers-list');
-  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">ðŸ”</div>No customers found</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>No customers found</div>';return;}
   el.innerHTML=list.map(c=>{
     const od=isOverdue(c);
     const waNum=c.whatsapp||c.phone;
@@ -899,18 +899,18 @@ function renderCustomers(){
           <div class="card-name">${esc(c.name)}${od?' <span class="badge badge-red" style="font-size:10px;padding:1px 6px">OVERDUE</span>':''}</div>
           <div class="card-addr">${esc(c.addr||'No address saved')}</div>
           <div class="card-detail">
-            ${days!==null?`<span>ðŸ—“ ${days}d ago</span>`:'<span style="color:var(--amber)">Never cleaned</span>'}
-            ${c.windows_count?`<span>ðŸªŸ ${c.windows_count}</span>`:''}
-            ${c.gate_code?`<span>ðŸ”‘ ${esc(c.gate_code)}</span>`:''}
+            ${days!==null?`<span>🗓 ${days}d ago</span>`:'<span style="color:var(--amber)">Never cleaned</span>'}
+            ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
+            ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
           </div>
           ${owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; Owes &pound;${c.price} from last time</div>`:""}
-          ${c.notes?`<div class="card-note">âš ï¸ ${esc(c.notes)}</div>`:''}
+          ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
           <button onclick="togglePaid(${c.id})" style="background:none;border:none;cursor:pointer;padding:0">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">Â£${c.price} ${c.paid?'âœ“ Paid':'Unpaid'}</span>
+            <span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>
           </button>
-          ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">âœï¸</button>`:''}
+          ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>`:''}
         </div>
       </div>
       <div class="card-badges" style="margin-top:8px">
@@ -918,10 +918,10 @@ function renderCustomers(){
         <span class="badge ${c.freq==='monthly'?'badge-gray':'badge-amber'}">${c.freq==='monthly'?'Monthly':'2-month'}</span>
       </div>
       <div class="card-actions">
-        ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">ðŸ“ž Call</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">ðŸ”” Before</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">âœ… After</a>`:''}
-        ${!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">ðŸ’³ Chase</a>`:''}
+        ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Before</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ After</a>`:''}
+        ${!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Chase</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
       </div>
     </div>`;
@@ -936,7 +936,7 @@ async function togglePaid(id){
   showToast(c.paid?'Marked as paid':'Marked as unpaid');
 }
 
-// â”€â”€ MAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MAP ───────────────────────────────────────────────────────────────────────
 let routeLine = null;
 let routeStops = [];
 let currentStopIdx = 0;
@@ -950,7 +950,7 @@ function initMap(){
   if(mapInstance){mapInstance.remove();mapInstance=null;routeLine=null;}
   mapInstance=L.map('map',{zoomControl:false}).setView([54.2,-6.7],10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'Â© OpenStreetMap',maxZoom:19
+    attribution:'© OpenStreetMap',maxZoom:19
   }).addTo(mapInstance);
   L.control.zoom({position:'topright'}).addTo(mapInstance);
   addMapMarkers();
@@ -992,7 +992,7 @@ function addMapMarkers(){
       const stopIdx = routeStops.findIndex(s=>s.id===c.id);
       marker.on('click',()=>showStop(stopIdx));
     } else {
-      marker.bindPopup(`<b>${esc(c.name)}</b><br><small>${esc(c.addr||'')}</small>${c.phone?`<br><a href="tel:${c.phone}">ðŸ“ž Call</a>`:''}`);
+      marker.bindPopup(`<b>${esc(c.name)}</b><br><small>${esc(c.addr||'')}</small>${c.phone?`<br><a href="tel:${c.phone}">📞 Call</a>`:''}`);
     }
     mapMarkers.push({id:c.id,marker});
   });
@@ -1001,20 +1001,20 @@ function addMapMarkers(){
   if(isRouteMode){
     info.classList.add('show');
     const missingCount = missing.length;
-    info.innerHTML = `ðŸ“ <b>${withCoords.length}</b> of ${list.length} stops on map
-      ${missingCount?`&nbsp;Â·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">ðŸ“Œ Fix ${missingCount} missing locations</button>`:''}
-      <br>ðŸ”´ Overdue &nbsp;ðŸŸ¢ Paid &nbsp;ðŸ”µ Normal`;
+    info.innerHTML = `📍 <b>${withCoords.length}</b> of ${list.length} stops on map
+      ${missingCount?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${missingCount} missing locations</button>`:''}
+      <br>🔴 Overdue &nbsp;🟢 Paid &nbsp;🔵 Normal`;
     if(routeStops.length){currentStopIdx=0;showStop(0);}
   } else {
     const allMissing=customers.filter(c=>c.addr&&(!c.lat||!c.lng)).length;
     info.classList.add('show');
     info.innerHTML=`${customers.filter(c=>c.lat&&c.lng).length} of ${customers.length} customers on map
-      ${allMissing?`&nbsp;Â·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">ðŸ“Œ Fix ${allMissing} missing</button>`:''}`;
+      ${allMissing?`&nbsp;·&nbsp;<button onclick="geocodeAll()" class="btn btn-sm btn-amber" style="padding:2px 8px;font-size:11px">📌 Fix ${allMissing} missing</button>`:''}`;
     hideStopCard();
   }
 }
 
-// â”€â”€ STOP CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── STOP CARD ─────────────────────────────────────────────────────────────────
 function showStop(idx){
   if(!routeStops.length)return;
   currentStopIdx=Math.max(0,Math.min(idx,routeStops.length-1));
@@ -1042,19 +1042,19 @@ function showStop(idx){
 
   const tags=[];
   if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
-  tags.push(c.paid?`<span class="badge badge-green">âœ“ Paid Â£${c.price}</span>`:`<span class="badge badge-red">Unpaid Â£${c.price}</span>`);
-  if(c.gate_code) tags.push(`<span class="badge badge-purple">ðŸ”‘ ${esc(c.gate_code)}</span>`);
-  if(c.windows_count) tags.push(`<span class="badge badge-gray">ðŸªŸ ${c.windows_count} windows</span>`);
-  if(c.notes) tags.push(`<span class="badge badge-amber">âš ï¸ ${esc(c.notes)}</span>`);
-  if(c.directions) tags.push(`<span class="badge badge-gray" style="font-size:11px">ðŸ“ ${esc(c.directions)}</span>`);
+  tags.push(c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">Unpaid £${c.price}</span>`);
+  if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
+  if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
+  if(c.notes) tags.push(`<span class="badge badge-amber">⚠️ ${esc(c.notes)}</span>`);
+  if(c.directions) tags.push(`<span class="badge badge-gray" style="font-size:11px">📍 ${esc(c.directions)}</span>`);
   document.getElementById('stop-tags').innerHTML=tags.join('');
 
   const waNum=c.whatsapp||c.phone;
   const actions=[];
-  if(c.phone) actions.push(`<a href="tel:${esc(c.phone)}" class="btn btn-sm">ðŸ“ž Call</a>`);
-  if(waNum) actions.push(`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}" class="btn btn-sm btn-green">ðŸ’¬ WhatsApp</a>`);
-  if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">ðŸ—ºï¸ Navigate</a>`);
-  actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">âœ… Done</button>`);
+  if(c.phone) actions.push(`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`);
+  if(waNum) actions.push(`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}" class="btn btn-sm btn-green">💬 WhatsApp</a>`);
+  if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">🗺️ Navigate</a>`);
+  actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
   document.getElementById('stop-actions').innerHTML=actions.join('');
   document.getElementById('stop-card').classList.add('active');
 }
@@ -1080,7 +1080,7 @@ function clearRouteMode(){
 
 function locateMe(){
   if(!navigator.geolocation){showToast('GPS not available');return;}
-  showToast('Finding your locationâ€¦');
+  showToast('Finding your location…');
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat,longitude:lng}=pos.coords;
     mapInstance.setView([lat,lng],14);
@@ -1093,7 +1093,7 @@ function navigateRoute(){
   const list=[...customers.filter(c=>c.route===mapRouteFilter&&c.addr)]
     .sort((a,b)=>(a.route_order||999)-(b.route_order||999));
   if(!list.length){showToast('No addresses on this route');return;}
-  // Google Maps directions URL â€” uses addresses directly, no coords needed
+  // Google Maps directions URL — uses addresses directly, no coords needed
   const addrs=list.map(c=>encodeURIComponent(c.addr)).filter(Boolean);
   if(addrs.length===1){
     window.open(`https://www.google.com/maps/search/?api=1&query=${addrs[0]}`,'_blank');
@@ -1110,10 +1110,10 @@ async function geocodeAll(){
   const toFix=customers.filter(c=>c.addr&&c.addr.length>4&&(!c.lat||!c.lng));
   if(!toFix.length){showToast('All addresses already mapped!');return;}
   const info=document.getElementById('map-info');
-  showToast(`Mapping ${toFix.length} addresses â€” please waitâ€¦`);
+  showToast(`Mapping ${toFix.length} addresses — please wait…`);
   let done=0,failed=0;
   for(const c of toFix){
-    info.innerHTML=`ðŸ“Œ Mapping addressesâ€¦ ${done}/${toFix.length} done${failed?` Â· ${failed} failed`:''}`;
+    info.innerHTML=`📌 Mapping addresses… ${done}/${toFix.length} done${failed?` · ${failed} failed`:''}`;
     const coords=await geocode(c.addr);
     if(coords){
       c.lat=coords.lat;c.lng=coords.lng;
@@ -1136,7 +1136,7 @@ async function geocode(addr){
   return null;
 }
 
-// â”€â”€ ROUTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ROUTES ────────────────────────────────────────────────────────────────────
 function renderWeekTabs(){
   document.getElementById('week-tabs').innerHTML=Object.keys(WEEKS).map(w=>
     `<button class="chip ${w===activeWeek?'active':''}" onclick="setWeek('${w}')">${w}</button>`).join('');
@@ -1150,24 +1150,24 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title">ðŸ“ ${esc(r)} <span class="route-count">(${list.length}) Â· Â£${earned}/Â£${total}</span></div>
+      <div class="route-title">📍 ${esc(r)} <span class="route-count">(${list.length}) · £${earned}/£${total}</span></div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
           <div class="order-btns">
-            ${i>0?`<button class="order-btn" onclick="moveCustomer(${c.id},-1,'${r}')">â–²</button>`:'<span style="height:18px;display:block"></span>'}
-            ${i<list.length-1?`<button class="order-btn" onclick="moveCustomer(${c.id},1,'${r}')">â–¼</button>`:'<span style="height:18px;display:block"></span>'}
+            ${i>0?`<button class="order-btn" onclick="moveCustomer(${c.id},-1,'${r}')">▲</button>`:'<span style="height:18px;display:block"></span>'}
+            ${i<list.length-1?`<button class="order-btn" onclick="moveCustomer(${c.id},1,'${r}')">▼</button>`:'<span style="height:18px;display:block"></span>'}
           </div>
           <div class="route-num">${i+1}</div>
           <div class="route-item-info">
-            <div class="route-item-name">${esc(c.name)} ${isOverdue(c)?'ðŸ”´':''}</div>
+            <div class="route-item-name">${esc(c.name)} ${isOverdue(c)?'🔴':''}</div>
             <div class="route-item-addr">${esc(c.addr||'No address')}</div>
-            ${c.gate_code?`<div class="route-item-gate">ðŸ”‘ ${esc(c.gate_code)}</div>`:''}
-            ${c.notes?`<div class="route-item-note">âš ï¸ ${esc(c.notes)}</div>`:''}
-            ${c.directions?`<div class="route-item-note">ðŸ“ ${esc(c.directions)}</div>`:''}
+            ${c.gate_code?`<div class="route-item-gate">🔑 ${esc(c.gate_code)}</div>`:''}
+            ${c.notes?`<div class="route-item-note">⚠️ ${esc(c.notes)}</div>`:''}
+            ${c.directions?`<div class="route-item-note">📍 ${esc(c.directions)}</div>`:''}
           </div>
           <div class="route-item-actions">
-            ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">ðŸ“ž</a>`:''}
-            <button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">Â£${c.price}${c.paid?' âœ“':''}</button>
+            ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">📞</a>`:''}
+            <button onclick="togglePaidRoute(${c.id},this)" class="btn btn-sm ${c.paid?'btn-green':''}">£${c.price}${c.paid?' ✓':''}</button>
           </div>
         </div>`).join('')}
       </div>
@@ -1195,18 +1195,18 @@ async function togglePaidRoute(id,btn){
   const c=customers.find(x=>x.id===id);if(!c)return;
   c.paid=!c.paid;
   await db.from('customers').update({paid:c.paid}).eq('id',id);
-  btn.textContent=`Â£${c.price}${c.paid?' âœ“':''}`;
+  btn.textContent=`£${c.price}${c.paid?' ✓':''}`;
   btn.classList.toggle('btn-green',c.paid);
   showToast(c.paid?'Marked as paid':'Marked as unpaid');
 }
 
-// â”€â”€ PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PAYMENTS ──────────────────────────────────────────────────────────────────
 function renderPayMetrics(){
   const paid=customers.filter(c=>c.paid),unpaid=customers.filter(c=>!c.paid);
   const col=paid.reduce((s,c)=>s+Number(c.price),0),owed=unpaid.reduce((s,c)=>s+Number(c.price),0);
   document.getElementById('pay-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">Â£${col}</div></div>
-    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">Â£${owed}</div></div>
+    <div class="metric"><div class="metric-label">Collected</div><div class="metric-value green">£${col}</div></div>
+    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>
     <div class="metric"><div class="metric-label">Paid</div><div class="metric-value">${paid.length}</div></div>
     <div class="metric"><div class="metric-label">Unpaid</div><div class="metric-value">${unpaid.length}</div></div>`;
 }
@@ -1235,16 +1235,16 @@ function renderPayments(){
           ${c.last_cleaned?`<div style="font-size:12px;color:var(--text-muted)">Last done: ${c.last_cleaned}</div>`:''}
         </div>
         <div style="text-align:right">
-          <div style="font-size:20px;font-weight:700">Â£${c.price}</div>
+          <div style="font-size:20px;font-weight:700">£${c.price}</div>
           <button onclick="togglePaidPay(${c.id})" style="background:none;border:none;cursor:pointer">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'âœ“ Paid':'Unpaid'}</span>
+            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'✓ Paid':'Unpaid'}</span>
           </button>
         </div>
       </div>
       <div class="card-actions" style="margin-top:8px">
-        <button class="btn btn-sm btn-green" onclick="openDoneModal(${c.id})">âœ… Mark done</button>
-        ${!c.paid&&waNum(c)?`<a href="https://wa.me/${waNum(c).replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">ðŸ’¬ Chase pay</a>`:''}
-        ${!c.paid&&getPayLink(c)?`<a href="${esc(getPayLink(c))}" class="btn btn-sm btn-purple" target="_blank">ðŸ’³ Pay link</a>`:''}
+        <button class="btn btn-sm btn-green" onclick="openDoneModal(${c.id})">✅ Mark done</button>
+        ${!c.paid&&waNum(c)?`<a href="https://wa.me/${waNum(c).replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💬 Chase pay</a>`:''}
+        ${!c.paid&&getPayLink(c)?`<a href="${esc(getPayLink(c))}" class="btn btn-sm btn-purple" target="_blank">💳 Pay link</a>`:''}
       </div>
     </div>`).join('');
 }
@@ -1256,7 +1256,7 @@ async function togglePaidPay(id){
   showToast(c.paid?'Marked as paid':'Marked as unpaid');
 }
 
-// â”€â”€ MARK DONE MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MARK DONE MODAL ───────────────────────────────────────────────────────────
 function openDoneModal(id){
   doneForId=id;
   const c=customers.find(x=>x.id===id);
@@ -1271,17 +1271,17 @@ async function confirmDone(){
   const doneBy=document.getElementById('done-by').value;
   const today=new Date().toLocaleDateString('en-GB');
   const isoDate=new Date().toISOString().split('T')[0];
-  // Record the clean — paid stays untouched (done ≠ paid)
+  // Record the clean � paid stays untouched (done ? paid)
   await db.from('cleaning_history').insert({customer_id:c.id,cleaned_date:isoDate,price:c.price,paid:c.paid,visit_notes:notes,done_by:doneBy});
   c.last_cleaned=today;
   await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
   closeDoneModal();
   renderCustomers();renderPayments();renderDashboard();
-  showToast(`✅ ${c.name} marked done`);
+  showToast(`? ${c.name} marked done`);
 }
 document.getElementById('done-modal').addEventListener('click',function(e){if(e.target===this)closeDoneModal();});
 
-// â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── HISTORY ───────────────────────────────────────────────────────────────────
 async function renderHistory(){
   const {data:history}=await db.from('cleaning_history')
     .select('*,customers(name,route)')
@@ -1289,7 +1289,7 @@ async function renderHistory(){
     .lte('cleaned_date',`${histYear}-12-31`)
     .order('cleaned_date',{ascending:false});
   if(!history||!history.length){
-    document.getElementById('history-list').innerHTML='<div class="empty"><div class="empty-icon">ðŸ“‹</div>No history for '+histYear+'</div>';
+    document.getElementById('history-list').innerHTML='<div class="empty"><div class="empty-icon">📋</div>No history for '+histYear+'</div>';
     renderHistMetrics([]);renderHistYearTabs();return;
   }
   renderHistMetrics(history);renderHistYearTabs();
@@ -1305,17 +1305,17 @@ async function renderHistory(){
     return`<div class="history-month">
       <div class="history-month-header">
         <div class="history-month-name">${month}</div>
-        <div class="history-month-stats">Â£${earned} Â· ${jobs.length} jobs</div>
+        <div class="history-month-stats">£${earned} · ${jobs.length} jobs</div>
       </div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${jobs.map(j=>`<div class="history-row">
           <div class="history-row-top">
             <div class="history-name">${esc(j.customers?.name||'Unknown')}</div>
-            <span class="badge badge-blue">Â£${j.price||0}</span>
+            <span class="badge badge-blue">£${j.price||0}</span>
           </div>
-          <div class="history-meta">${esc(j.customers?.route||'')} Â· ${new Date(j.cleaned_date).toLocaleDateString('en-GB')}</div>
-          ${j.visit_notes?`<div class="history-notes">ðŸ“ ${esc(j.visit_notes)}</div>`:''}
-          ${j.done_by?`<div class="history-by">ðŸ‘¤ Done by ${esc(j.done_by)}</div>`:''}
+          <div class="history-meta">${esc(j.customers?.route||'')} · ${new Date(j.cleaned_date).toLocaleDateString('en-GB')}</div>
+          ${j.visit_notes?`<div class="history-notes">📝 ${esc(j.visit_notes)}</div>`:''}
+          ${j.done_by?`<div class="history-by">👤 Done by ${esc(j.done_by)}</div>`:''}
         </div>`).join('')}
       </div>
     </div>`;
@@ -1324,7 +1324,7 @@ async function renderHistory(){
 function renderHistMetrics(h){
   const total=h.reduce((s,j)=>s+Number(j.price||0),0);
   document.getElementById('hist-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">${histYear} Earnings</div><div class="metric-value green">Â£${total}</div></div>
+    <div class="metric"><div class="metric-label">${histYear} Earnings</div><div class="metric-value green">£${total}</div></div>
     <div class="metric"><div class="metric-label">Jobs Done</div><div class="metric-value blue">${h.length}</div></div>`;
 }
 function renderHistYearTabs(){
@@ -1334,7 +1334,7 @@ function renderHistYearTabs(){
 }
 function setHistYear(y){histYear=y;renderHistory();}
 
-// â”€â”€ MESSAGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MESSAGES ──────────────────────────────────────────────────────────────────
 function getPayLink(c){
   if(c.revolut_link) return c.revolut_link;
   if(c.stripe_link) return c.stripe_link;
@@ -1344,12 +1344,12 @@ function getMsg(c,type){
   const first=c.name.split(' ')[0];
   const link=getPayLink(c);
   const payLine=link?`\nPay here: ${link}`:``;
-  if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! ðŸª£`;
-  if(type==='after')return`Hi ${first}! All done â€” your windows are sparkling clean! ðŸ’§ That's Â£${c.price} whenever suits you.${payLine}\nThanks a million! ðŸª£`;
-  return`Hi ${first}! Hope you're well. Just a gentle reminder that Â£${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks ðŸª£`;
+  if(type==='before')return`Hi ${first}! Just a wee reminder that we'll be around to clean your windows tomorrow. See you then! 🪣`;
+  if(type==='after')return`Hi ${first}! All done — your windows are sparkling clean! 💧 That's £${c.price} whenever suits you.${payLine}\nThanks a million! 🪣`;
+  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
 }
 
-// â”€â”€ EDIT SCREEN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EDIT SCREEN ───────────────────────────────────────────────────────────────
 function openEditScreen(id){
   editingId=id;
   const screen=document.getElementById('edit-screen');
@@ -1395,7 +1395,7 @@ async function saveCustomer(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){showToast('Please enter a name');return;}
   const btn=document.getElementById('save-btn');
-  btn.textContent='Savingâ€¦';btn.disabled=true;
+  btn.textContent='Saving…';btn.disabled=true;
   const addr=document.getElementById('f-addr').value.trim();
   const data={
     name,addr,
@@ -1426,8 +1426,8 @@ async function saveCustomer(){
     btn.textContent='Save customer';btn.disabled=false;
     closeEditScreen();
     renderCustomers();renderDashboard();
-    showToast(editingId?'Customer updated âœ“':'Customer added âœ“');
-    // geocode in background after save â€” doesn't block the UI
+    showToast(editingId?'Customer updated ✓':'Customer added ✓');
+    // geocode in background after save — doesn't block the UI
     if(addr&&savedId){
       geocode(addr).then(coords=>{
         if(coords){
@@ -1450,7 +1450,7 @@ async function deleteCustomer(){
   showToast('Customer deleted');
 }
 
-// â”€â”€ ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
 async function renderAdmin(){
   // Monthly stats from cleaning_history
   const now=new Date();
@@ -1467,9 +1467,9 @@ async function renderAdmin(){
 
   document.getElementById('admin-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">Jobs this month</div><div class="metric-value blue">${jobsDone}</div></div>
-    <div class="metric"><div class="metric-label">Earned this month</div><div class="metric-value green">Â£${earned}</div></div>
+    <div class="metric"><div class="metric-label">Earned this month</div><div class="metric-value green">£${earned}</div></div>
     <div class="metric"><div class="metric-label">Customers paid</div><div class="metric-value green">${paid}</div></div>
-    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">Â£${owed}</div></div>`;
+    <div class="metric"><div class="metric-label">Outstanding</div><div class="metric-value red">£${owed}</div></div>`;
 
   // By-employee breakdown
   const byEmp={};
@@ -1479,7 +1479,7 @@ async function renderAdmin(){
     byEmp[who].jobs++;byEmp[who].earned+=Number(j.price||0);
   });
   const empRows=Object.entries(byEmp).map(([name,s])=>
-    `<div class="route-item"><div class="route-item-info"><div class="route-item-name">${esc(name)}</div><div class="route-item-addr">${s.jobs} jobs Â· Â£${s.earned} earned this month</div></div></div>`
+    `<div class="route-item"><div class="route-item-info"><div class="route-item-name">${esc(name)}</div><div class="route-item-addr">${s.jobs} jobs · £${s.earned} earned this month</div></div></div>`
   ).join('');
 
   // Users list
@@ -1488,7 +1488,7 @@ async function renderAdmin(){
     <div class="route-item">
       <div class="route-item-info">
         <div class="route-item-name">${esc(p.name||p.email)}</div>
-        <div class="route-item-addr">${esc(p.email||'')} Â· ${p.role}</div>
+        <div class="route-item-addr">${esc(p.email||'')} · ${p.role}</div>
       </div>
       <div style="display:flex;gap:6px">
         ${p.role==='employee'?`<button class="btn btn-sm btn-blue" onclick="setRole('${p.id}','admin')">Make admin</button>`:`<button class="btn btn-sm" onclick="setRole('${p.id}','employee')">Make employee</button>`}
@@ -1511,7 +1511,7 @@ async function renderAdmin(){
       return`<div class="route-item">
         <div class="route-item-info">
           <div class="route-item-name">${esc(r)}</div>
-          <div class="route-item-addr">${list.length} customers Â· ${paidC.length} paid${owed?` Â· <span style="color:var(--red)">Â£${owed} owed</span>`:' Â· all paid '}</div>
+          <div class="route-item-addr">${list.length} customers · ${paidC.length} paid${owed?` · <span style="color:var(--red)">£${owed} owed</span>`:' · all paid '}</div>
         </div>
         <button class="btn btn-sm btn-amber" onclick="newCycle('${r.replace(/\x27/g,"")}')">New Cycle</button>
       </div>`;
@@ -1542,12 +1542,12 @@ async function inviteEmployee(){
   if(!email){showToast('Enter an email address');return;}
   // Pre-create a profile row so when they sign up they get the right name
   // (Supabase will link by user ID on first login)
-  showToast(`Tell ${name||email} to sign up at your site â€” they'll appear here automatically`);
+  showToast(`Tell ${name||email} to sign up at your site — they'll appear here automatically`);
   document.getElementById('invite-email').value='';
   document.getElementById('invite-name').value='';
 }
 
-// â”€â”€ UTILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -1555,16 +1555,16 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// â”€â”€ SERVICE WORKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
-// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{
   try{
     const {data:{session}}=await db.auth.getSession();
     if(session){await loadCustomers();}else{showLogin();}
     db.auth.onAuthStateChange(async(event,session)=>{
-      // INITIAL_SESSION fires immediately and duplicates the getSession() call above â€” skip it
+      // INITIAL_SESSION fires immediately and duplicates the getSession() call above — skip it
       if(event==='INITIAL_SESSION')return;
       if(session){await loadCustomers();}else{showLogin();customers=[];}
     });

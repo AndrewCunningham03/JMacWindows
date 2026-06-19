@@ -304,6 +304,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .today-name{font-weight:700;font-size:15px}
 .today-addr{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today-acts{display:flex;gap:6px;flex-shrink:0}
+/* Tappable paid pill */
+.badge-btn{background:none;border:none;padding:0;cursor:pointer;transition:transform .1s}
+.badge-btn:active{transform:scale(.9)}
+.badge-btn .badge{border:1px dashed transparent}
+.badge-btn .badge-red{border-color:rgba(220,38,38,.4)}
 </style>
 </head>
 <body>
@@ -983,6 +988,7 @@ function renderTodayRound(){
           <div class="today-addr">${esc(c.addr||'No address')}</div>
         </div>
         <div class="today-acts">
+          <button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change">${c.paid?'<span class="badge badge-green">✓ Paid</span>':'<span class="badge badge-red">£</span>'}</button>
           ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green" title="All done message">✅</a>`:''}
           ${done?'':`<button class="btn btn-sm btn-blue" onclick="openDoneModal(${c.id})">Done</button>`}
         </div>
@@ -1050,7 +1056,7 @@ function renderCustomers(){
           ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          ${currentUserRole==='admin'?`<span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Unpaid'}</span>`:`<span class="badge ${c.paid?'badge-green':'badge-amber'}">${c.paid?'✓ Paid':'Unpaid'}</span>`}
+          <button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change">${currentUserRole==='admin'?`<span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price} ${c.paid?'✓ Paid':'Tap if paid'}</span>`:`<span class="badge ${c.paid?'badge-green':'badge-amber'}">${c.paid?'✓ Paid':'Tap if paid'}</span>`}</button>
           ${currentUserRole==='admin'?`<button class="btn btn-icon btn-sm" onclick="openEditScreen(${c.id})" title="Edit">✏️</button>`:''}
         </div>
       </div>
@@ -1176,7 +1182,7 @@ function showStop(idx){
 
   const tags=[];
   if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
-  if(currentUserRole==='admin'){tags.push(c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">Unpaid £${c.price}</span>`);}else{tags.push(c.paid?`<span class="badge badge-green">&#10003; Paid</span>`:`<span class="badge badge-amber">Unpaid</span>`);}
+  if(currentUserRole==='admin'){tags.push(`<button class="badge-btn" onclick="togglePaid(${c.id})">${c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">£${c.price} · Tap if paid</span>`}</button>`);}else{tags.push(`<button class="badge-btn" onclick="togglePaid(${c.id})">${c.paid?`<span class="badge badge-green">&#10003; Paid</span>`:`<span class="badge badge-amber">Tap if paid</span>`}</button>`);}
   if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
   if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
   if(c.notes) tags.push(`<span class="badge badge-amber">⚠️ ${esc(c.notes)}</span>`);
@@ -1301,7 +1307,7 @@ function renderRoutes(){
           </div>
           <div class="route-item-actions">
             ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-icon btn-sm">📞</a>`:''}
-            ${currentUserRole==='admin'?`<span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price}${c.paid?' ✓':''}</span>`:""}
+            ${currentUserRole==='admin'?`<button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change"><span class="badge ${c.paid?'badge-green':'badge-red'}">£${c.price}${c.paid?' ✓':' · tap'}</span></button>`:""}
           </div>
         </div>`).join('')}
       </div>
@@ -1362,8 +1368,8 @@ function renderPayments(){
         </div>
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:700">£${c.price}</div>
-          <button onclick="togglePaidPay(${c.id})" style="background:none;border:none;cursor:pointer">
-            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'✓ Paid':'Unpaid'}</span>
+          <button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change">
+            <span class="badge ${c.paid?'badge-green':'badge-red'}">${c.paid?'✓ Paid':'Tap if paid'}</span>
           </button>
         </div>
       </div>
@@ -1374,12 +1380,18 @@ function renderPayments(){
       </div>
     </div>`).join('');
 }
-async function togglePaidPay(id){
+async function togglePaid(id){
   const c=customers.find(x=>x.id===id);if(!c)return;
-  c.paid=!c.paid;
-  await db.from('customers').update({paid:c.paid}).eq('id',id);
-  renderPayMetrics();renderPayments();
-  showToast(c.paid?'Marked as paid':'Marked as unpaid');
+  const newVal=!c.paid;
+  c.paid=newVal;
+  const {error}=await db.from('customers').update({paid:newVal}).eq('id',id);
+  if(error){c.paid=!newVal;showToast('Error: '+error.message);return;}
+  // keep every visible surface in sync
+  renderPayMetrics();renderPayments();renderCustomers();renderRoutes();renderDashboard();
+  // refresh the map stop-card if it's open on this customer
+  const sc=document.getElementById('stop-card');
+  if(sc&&sc.classList.contains('active')&&routeStops.length)showStop(currentStopIdx);
+  showToast(newVal?`Marked paid: ${c.name}`:`Marked unpaid: ${c.name}`);
 }
 
 // ── MARK DONE MODAL ───────────────────────────────────────────────────────────
@@ -1661,7 +1673,7 @@ async function renderAdmin(){
           <div class="route-item-name">${esc(r)}</div>
           <div class="route-item-addr">${list.length} customers · ${paidC.length} paid${owed?` · <span style="color:var(--red)">£${owed} owed</span>`:' · all paid '}</div>
         </div>
-        <button class="btn btn-sm btn-amber" onclick="newCycle('${r.replace(/\x27/g,"")}')">New Cycle</button>
+        <button class="btn btn-sm btn-amber" onclick="newCycle('${r.replace(/\x27/g,"")}')">↻ Next round</button>
       </div>`;
     }).join('')}
     </div>`;
@@ -1679,12 +1691,19 @@ async function newCycle(route){
   const list=customers.filter(c=>c.route===route);
   if(!list.length){showToast('No customers on this route');return;}
   const stillOwing=list.filter(c=>!c.paid).length;
-  const warn=stillOwing?`\n\n⚠️ ${stillOwing} customer(s) still haven't paid for the last clean — their unpaid history stays recorded.`:'';
-  if(!confirm(`Start new cycle for ${route}? All ${list.length} customers will be marked unpaid ready for the next round. Cleaning history is preserved.${warn}`))return;
-  const toReset=list.filter(c=>c.paid);
-  await Promise.all(toReset.map(c=>{c.paid=false;return db.from('customers').update({paid:false}).eq('id',c.id);}));
-  renderCustomers();renderPayments();renderDashboard();renderAdmin();
-  showToast(`New cycle started for ${route}`);
+  const warn=stillOwing?`\n\n⚠️ ${stillOwing} customer(s) still haven't paid — their unpaid jobs stay recorded in History.`:'';
+  if(!confirm(`Start the next round for ${route}?\n\nAll ${list.length} customers will be reset ready to clean again (marked unpaid, cleared from "done"). Your cleaning history is kept.${warn}`))return;
+  // Reset the whole route: unpaid + clear last_cleaned so they become due again
+  const updates=list.map(c=>{
+    c.paid=false;
+    c.last_cleaned='';
+    return db.from('customers').update({paid:false,last_cleaned:''}).eq('id',c.id);
+  });
+  const results=await Promise.all(updates);
+  const failed=results.find(r=>r&&r.error);
+  if(failed){showToast('Error: '+failed.error.message);return;}
+  renderCustomers();renderPayments();renderDashboard();renderRoutes();renderAdmin();
+  showToast(`Next round started for ${route} — ${list.length} reset`);
 }
 async function bulkImport(){
   const raw=document.getElementById('bulk-input').value.trim();

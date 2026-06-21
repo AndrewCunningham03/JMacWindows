@@ -1110,7 +1110,6 @@ function renderCustomers(){
       </div>
       <div class="card-actions">
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
-        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Coming soon</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'beforeTomorrow'))}" class="btn btn-sm" title="See you tomorrow message">📲 Tomorrow</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ All done</a>`:''}
         ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Payment reminder</a>`:''}

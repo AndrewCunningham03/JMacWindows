@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Window Rounds">
 <meta name="theme-color" content="#2563eb">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,7 +225,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .stop-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* Locate me button */
-.map-locate-btn{position:fixed;bottom:220px;right:12px;z-index:499;background:var(--white);border:2px solid var(--gray-border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
 
 /* Payments */
 .pay-card{background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:15px;margin-bottom:11px;box-shadow:var(--shadow-sm)}
@@ -642,153 +642,6 @@ let currentUserId = '';
 let currentUserRole = 'employee'; // 'admin' or 'employee'
 let currentUserName = '';
 
-// ── SEED DATA ─────────────────────────────────────────────────────────────────
-const SEED = [
-  {name:"Paula Beggan",addr:"Keady",phone:"+447493204539",route:"Keady / Derrynoose",freq:"monthly",price:25,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Suzanne McKeever",addr:"2 The Oaks Derrynoose",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Maggie",addr:"34 Crossmore Green Keady BT60 3TR",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sarah McQuillan",addr:"6 Crossmore Green Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Mairead Duffy",addr:"29 Mountview Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Fiona Harte",addr:"12 St Matthews Est Keady BT60 3SF",phone:"+447849586933",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Eilish McCaffrey",addr:"17 Annvale Road Keady BT60 2SA",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Claire McKinney",addr:"40 St Matthews Estate Keady",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lorraine Kirk",addr:"8 Richview Heights BT60 3SW",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Margaret",addr:"27 Caramoyle Keady BT60 2RN",phone:"+447746571582",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Tina Maguire",addr:"62 Drumgreenagh Road Madden BT60 3LU",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Patricia Carr",addr:"200 Dundrum Road Tasagh BT60 2NQ",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Karen",addr:"134B Granemore Road",phone:"",route:"Keady / Derrynoose",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Chloe Rice",addr:"15 Main Street Darkley BT60 3BB",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Aoife",addr:"",phone:"+447526203812",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Armagh Tuition",addr:"Millview House 55 Dundrum Road Tassagh BT60 2PZ",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Ailish",addr:"15 Lower Darkley Road Tassagh BT60 2PD",phone:"+447720889994",route:"Keady / Derrynoose",freq:"monthly",price:30,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Brenda",addr:"189 Dundrum Road Tassagh BT60 2NQ",phone:"+447713676705",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Bungalows",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sandra Sloan",addr:"37 Foley Road Tassagh BT60 2QX",phone:"07734264896",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Edell McKee",addr:"157 Coolmillish Road Mowhan BT60 2EY",phone:"",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Catherine",addr:"134 Coolmillish Rd BT60 2EY",phone:"+447703739740",route:"Keady / Derrynoose",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Maria McGreevy",addr:"7 Rosemount Avenue BT60 1BB",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Zoe Donnelly",addr:"8 Greenfield Park",phone:"+447716539244",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Jacqueline Mackle",addr:"",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Mackles Icecream Monaghan",addr:"",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"All windows around back + drive through window",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Laura Mone",addr:"2 Killuney Meadows Armagh BT61 9HZ",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Kathleen Fields",addr:"58 Castle Street Armagh BT61 7EF",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Brenda Black",addr:"56 Castle Street Armagh BT61 7EF",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Blathnaid Woods",addr:"61 Monaghan Road BT60 4DR",phone:"07753477780",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Margot",addr:"Salters Grange No 1 BT61 8DZ",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Denise Watt",addr:"28 Linseys Heights Armagh BT61 9HB",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Jenna Goll",addr:"15 Ardmore Road Armagh BT60 1AH",phone:"",route:"Armagh",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Thomas O'Hanlon",addr:"6 Carraigh Dua Belleek",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Donna (Ma)",addr:"43 Doyles Villas",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Code Clothing",addr:"Beside Camocha",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Donna McNeil",addr:"Beside dog groomer Camlough",phone:"+447850551812",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Chloe Morgan",addr:"14 Dobsons Way Bessbrook BT35 7FH",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Travel Writer",addr:"2 Brookview Close",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Tanya Payne",addr:"76 John F Kennedy BT35 7EW",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Fiona Trainor",addr:"72 The Gardens Bessbrook",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Horse Woman",addr:"26 Carrickcloghan Hill Camlough BT35 7HH",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Patricia Fegan",addr:"22B Carrivekeeney Road BT35 7LU",phone:"+447872911181",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Angela Loughan",addr:"17 Tamnaghbane Road Kileavey BT35 8RF",phone:"+447934628252",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Pauline",addr:"4 Gordons Lane Camlough BT35 7LA",phone:"+447732568596",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Fiona Crozier",addr:"27 Derrywilligan Road Bessbrook",phone:"+447547889797",route:"Camlough / Bessbrook",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Edyta",addr:"3 Cloughan Court Camlough BT35 7NJ",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lesa Morrow",addr:"55 Fountain Street",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Abby McGrath",addr:"41 Acorn Hill BT35 7BY",phone:"",route:"Camlough / Bessbrook",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Aimee McArdle",addr:"15 Gortcille Cladymore Road BT60 2FF",phone:"",route:"Clady",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lee Harold",addr:"2 Gortcille Cladymore",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Maveen Brown",addr:"31 Tullywill Road Cladybeg BT60 2HQ",phone:"+447739359888",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Malachy Savage",addr:"5 Gortcille Cladymore (green door)",phone:"+447745662473",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Wee Man",addr:"1 Parkview Close BT35 8GF",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Karrie Byrne",addr:"3 Francis Jordan BT35 8HS",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Ashling Carragher",addr:"4A Savers Road BT35 8NA",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sarah Higgins",addr:"7B Station Road BT35 8OH",phone:"",route:"Clady",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Caravan Site",addr:"115 Concession Road Culloville",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sheila Carragher's Ma",addr:"37 Malachy Conlon Park Culloville BT35 9AN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Fionnuala",addr:"A75VF83",phone:"+447770366575",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Nicole King",addr:"117 Concession Road",phone:"+353860339033",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Wipe sills after",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Margaret McCarthy",addr:"64 Concession Road",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Siobhan Mone",addr:"17A Lisseraw Road",phone:"+447577359934",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Steven Rushe",addr:"17 Rathview Park BT35 9HJ",phone:"+353877839315",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Jacqueline Marron",addr:"9 Rathkeelan Park BT35 9TN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Olaoghog Clo",addr:"1 Chapel View",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Do skylight, careful with vents",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Daniela",addr:"87 Ard Ross BT35 9BZ",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sarah Shields",addr:"70 Rathkeelan Park Crossmaglen BT35 9TN",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Tina McKeown",addr:"5 Creenkil Road Crossmaglen BT35 9AJ",phone:"",route:"Crossmaglen",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Breige",addr:"5A Drumill Road BT35 9LA",phone:"+353864141997",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sheila Carragher",addr:"59 Annaghmare Road Crossmaglen BT35 9BG",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Rois Rois",addr:"31 Lismore Crossmaglen BT35 9ET",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sinead Nugent",addr:"4A Art McCooey Park BT35 9DZ",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sabrina McKeever",addr:"27 Urchill Creggan",phone:"+447513759244",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lina",addr:"13 Urchill Creggan",phone:"",route:"Crossmaglen",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Orla",addr:"3 Ard Carraig",phone:"+353872816704",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Noreen McCreesh",addr:"11 McKinley Park BT35 0PS",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Debbie Donaldson",addr:"9 Ballyfannahan Road BT35 0LY",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Kayleigh Hughes",addr:"17 Cherry Grove Cullyhannah BT35 0RW",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok - do shed also",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Cakesbykhaz",addr:"2A New Road BT35 9PG",phone:"07756388572",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Noelle",addr:"16 Legmoylin Road BT35 9LL Silverbridge",phone:"",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - pin drop in insta",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Antoinette",addr:"17B Bonds Road Silverbridge BT35 9PE",phone:"07824980886",route:"Cullyhannah",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Angela Crilly",addr:"3 Fairview Park BT35 9SP",phone:"+447388456820",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Deirdre Graham",addr:"BT35 9SX",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Fionnuala McAnulty",addr:"7 Shean Road Forkhill BT35 9SY",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Patrick Campbell",addr:"11 Tullymacrieve Road BT35 9RD",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Ciaran Gollogly",addr:"4 Tullymacrieve Road",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Keith McConnon",addr:"A91X3K4",phone:"",route:"Forkhill / Mullaghawn",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Border Boutique",addr:"A91PKE3",phone:"",route:"Forkhill / Mullaghawn",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Darren Beattie",addr:"",phone:"",route:"Forkhill / Mullaghawn",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Ann McElroy",addr:"",phone:"+447974954491",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Melissa McReesh",addr:"28 Newry Road Tievecrom",phone:"",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - will need directions",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Amanda Cosmetics",addr:"16A Aghadavoyle Road BT35 8JJ",phone:"07483445694",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Instagram - ring first, dogs at back",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Tracey Hollywood",addr:"29 Bearna Park BT35 8TP",phone:"07719104799",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Stephanie Rafferty",addr:"16 Culan Close",phone:"+447516843056",route:"Kileavy / Dromintee",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"James Magee",addr:"14A Windsor Avenue BT34 1EG",phone:"",route:"Newry",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Heather",addr:"68 Drumgullion Ave Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sine",addr:"4 Meadowbrook Park",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Colin McKnight",addr:"149 Belfast Road Newry BT34 1QX",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Victoria",addr:"8 Shepherds Close BT35 6FD",phone:"+447727309074",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Karan",addr:"30 Canal Street BT35 6JB",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Shirley Smith",addr:"51 Church Street",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Saulena",addr:"52 Dominic Street BT35 8BW",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Debbie",addr:"19 Turmore Road Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Kerry Stuart",addr:"22 Ardgreen Drive BT35 8EY",phone:"07731569705",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Mary McMahon",addr:"",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Pamela Flynn",addr:"252 Craigmore View BT35 6GH",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Margretta",addr:"7 Aileen Terrace BT35 8DU",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Moira Cruz",addr:"13 Aileen Terrace Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lorna Sarah",addr:"9 Fern Court Monkshill Newry",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sarah Wedding Singer",addr:"7 Shinn Road BT34 1PA",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Elizabeth",addr:"11 Laurel Grove BT34 1TP",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Megan",addr:"89 Ardfreelin BT34 1JG",phone:"",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"WhatsApp",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Linda",addr:"4A Forthill Road Crieve Newry BT34 2LP",phone:"07928106391",route:"Newry",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Michelle Finnegan",addr:"69 Carrickgallogly Road BT60 2JS",phone:"07951457809",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Martina McVerry",addr:"7 Cluster Road BT35 0AR",phone:"",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Stephen Kennedy",addr:"23 Whiterock Road BT35 0AN",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Leanne Fin",addr:"7 Ballymoyer Weir BT60 2FP",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Nathan Vallely",addr:"A29 Service Station",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Do shop and barbers",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Terry Googly",addr:"1 Viewpoint Road Newtownhamilton",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Paddy McGrory",addr:"3 School Meadows",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"James McGrory",addr:"12 School Meadows",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Andrea Salon",addr:"Beauty salon in Newtown",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Raimonda",addr:"15 Ballymoyer Road BT35 0AJ",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Facebook",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Ciara Davidson",addr:"5 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Tasha Connolly",addr:"7 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Vitalijus",addr:"11 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Stephanie Connolly",addr:"12 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Anne Maria",addr:"22 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Irene Mullen",addr:"34 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Nichola Connolly",addr:"37 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lauren Hollywood",addr:"35 Meadowvale",phone:"",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Evelina",addr:"31 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Concepta",addr:"14 Meadowvale",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Lorraine Gib",addr:"10 Lirgrove",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Rosie Dog",addr:"12 Lirgrove Newtownhamilton",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"Camera watching - heads up",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Kevin Gallogly",addr:"21 Dungormley Estate",phone:"",route:"Newtown",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Denise Henry",addr:"43 Barkers Road BT35 0PQ",phone:"+447749038105",route:"Newtown",freq:"2months",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Donna",addr:"4 Glassdrumman Road BT35 6SZ",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sussie",addr:"22 Acton Road Poyntzpass BT35 6TB",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Nicola",addr:"BT34 1TE Jerrettspass",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Sarah McGivern",addr:"16A Knockduff Road Jerrettspass BT35 6LU",phone:"07545062208",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"Nicole Aesthetic Nurse",addr:"10 Mossview Road Poyntzpass BT35 6RR",phone:"07526247069",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-  {name:"JP Transport",addr:"43A Legananny Road Loughbrickland BT32 3QR",phone:"",route:"Poyntzpass / Jerrettspass",freq:"monthly",price:20,paid:false,last_cleaned:"",notes:"TikTok",whatsapp:"",windows_count:0,gate_code:"",directions:"",stripe_link:"",revolut_link:""},
-];
-
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 async function login(){
   const email=document.getElementById('login-email').value.trim();
@@ -975,8 +828,7 @@ function renderTodayRound(){
       <div class="empty-icon">👋</div>
       <div style="font-weight:700;font-size:17px;margin-bottom:4px;color:var(--text)">Welcome!</div>
       <div style="margin-bottom:16px">Add your customers to get started.</div>
-      ${currentUserRole==='admin'?`<button class="btn btn-blue" onclick="openEditScreen(null)">+ Add your first customer</button>
-      <div style="margin-top:10px"><button class="btn btn-sm" onclick="showTab('admin',document.getElementById('nav-admin'))">Or bulk import a list</button></div>`:'<div>Ask your boss to add the customer list.</div>'}
+      ${currentUserRole==='admin'?`<button class="btn btn-blue" onclick="openEditScreen(null)">+ Add your first customer</button>`:'<div>Ask your boss to add the customer list.</div>'}
     </div>`;
     return;
   }
@@ -1253,16 +1105,6 @@ function clearRouteMode(){
   addMapMarkers();
 }
 
-function locateMe(){
-  if(!navigator.geolocation){showToast('GPS not available');return;}
-  showToast('Finding your location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude:lat,longitude:lng}=pos.coords;
-    mapInstance.setView([lat,lng],14);
-    L.circleMarker([lat,lng],{radius:9,color:'#fff',weight:2,fillColor:'#0ea5e9',fillOpacity:1})
-      .addTo(mapInstance).bindPopup('You are here').openPopup();
-  },()=>showToast('Could not get location'));
-}
 
 function navigateRoute(){
   const list=[...customers.filter(c=>c.route===mapRouteFilter&&c.addr)]
@@ -1837,7 +1679,7 @@ function showToast(msg){
 }
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
-if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{

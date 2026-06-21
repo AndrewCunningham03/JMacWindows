@@ -2,10 +2,11 @@
   "name": "Window Rounds",
   "short_name": "Rounds",
   "description": "Window cleaning round manager",
-  "start_url": "/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0ea5e9",
+  "background_color": "#2563eb",
+  "theme_color": "#2563eb",
   "orientation": "portrait",
   "icons": [
     {

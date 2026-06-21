@@ -1574,7 +1574,7 @@ function getMsg(c,type){
     if(c.paid)return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Thanks so much and enjoy your day! 🪣`;
     return`Hi ${first}! Windows are all done. If you could let me know if you're happy and if there is anything you would like me to improve on. Here is the link to pay, thank you so much and enjoy your day!${payLine} 🪣`;
   }
-  return`Hi ${first}! Hope you're well. Just a gentle reminder that £${c.price} is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
+  return`Hi ${first}! Hope you're well. Just a gentle reminder that payment is outstanding for your window cleaning.${payLine}\nNo rush, whenever you get a chance! Thanks 🪣`;
 }
 
 // ── EDIT SCREEN ───────────────────────────────────────────────────────────────
@@ -1733,7 +1733,7 @@ async function renderAdmin(){
 
   // Owing list — customers who were still unpaid when a route's "Next round" was started
   try{
-    const {data:owing}=await db.from('unpaid_carryovers').select('*,customers(name,whatsapp,phone,price)').eq('resolved',false).order('created_at',{ascending:false});
+    const {data:owing}=await db.from('unpaid_carryovers').select('*,customers(name,whatsapp,phone,price,greeting_name,revolut_link,stripe_link)').eq('resolved',false).order('created_at',{ascending:false});
     const owingEl=document.getElementById('admin-owing-list');
     if(!owing||!owing.length){
       owingEl.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">✅ Nobody on the owing list</div>';
@@ -1780,7 +1780,9 @@ async function renderAdmin(){
 function carryoverMsg(cust,row){
   const first=(cust.greeting_name&&cust.greeting_name.trim())||cust.name.split(' ')[0];
   const times=row.miss_count>1?`the last ${row.miss_count} window cleanings`:`last month's window cleaning`;
-  return`Hi ${first}! Just a heads up — you haven't paid for ${times}, so you'll be charged for ${row.miss_count+1} cleanings this time: £${row.amount_owed} total. Let me know if you have any questions. Thanks! 🪣`;
+  const link=getPayLink(cust);
+  const payLine=link?`\nHere's the link to pay: ${link}`:``;
+  return`Hi ${first}! Just a heads up — you haven't paid for ${times}, so you'll be charged for ${row.miss_count+1} cleanings this time.${payLine}\nLet me know if you have any questions. Thanks! 🪣`;
 }
 async function resolveCarryover(id){
   const {error}=await db.from('unpaid_carryovers').update({resolved:true}).eq('id',id);

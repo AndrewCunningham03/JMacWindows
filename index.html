@@ -1711,7 +1711,21 @@ function showToast(msg){
 }
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+// Actively remove any previously-installed service worker and its caches.
+// This app needs a live connection to Supabase for almost everything, so a
+// service worker buys nothing - and on iOS PWAs it's a frequent cause of
+// exactly this "stuck loading / refreshes itself / shows an old version"
+// behaviour. Safer to just not have one.
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  }).catch(()=>{});
+}
+if('caches' in window){
+  caches.keys().then(keys=>{
+    keys.forEach(k=>caches.delete(k));
+  }).catch(()=>{});
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{

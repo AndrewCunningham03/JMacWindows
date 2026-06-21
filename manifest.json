@@ -1,6 +1,6 @@
 {
-  "name": "Window Rounds",
-  "short_name": "Rounds",
+  "name": "JMac Windows",
+  "short_name": "JMac",
   "description": "Window cleaning round manager",
   "start_url": ".",
   "scope": ".",

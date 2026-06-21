@@ -1,4 +1,4 @@
-# Window Rounds — JMac Window Cleaning
+# JMac Windows — JMac Window Cleaning
 
 A simple phone app for running window cleaning rounds: customers, weekly routes,
 marking jobs done, tracking who's paid, and sending WhatsApp messages.

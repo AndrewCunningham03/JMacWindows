@@ -585,20 +585,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <div class="modal-overlay" id="done-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Mark job done</div>
+    <div class="modal-title" id="done-modal-title">Mark job done</div>
     <div id="done-modal-customer" style="font-size:15px;font-weight:600;color:var(--blue);margin-bottom:16px"></div>
     <input id="done-by" type="hidden">
-    <div class="field">
-      <label>Did they pay?</label>
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button id="pay-btn-no" class="btn btn-sm btn-amber" style="flex:1;font-size:14px;opacity:1" onclick="setPaidOnSpot(false)">Not paid</button>
-        <button id="pay-btn-yes" class="btn btn-sm" style="flex:1;font-size:14px;background:#d1fae5;color:#065f46;border:2px solid #d1fae5" onclick="setPaidOnSpot(true)">Paid!</button>
+    <div id="done-modal-form">
+      <div class="field">
+        <label>Did they pay?</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button id="pay-btn-no" class="btn btn-sm btn-amber" style="flex:1;font-size:14px;opacity:1" onclick="setPaidOnSpot(false)">Not paid</button>
+          <button id="pay-btn-yes" class="btn btn-sm" style="flex:1;font-size:14px;background:#d1fae5;color:#065f46;border:2px solid #d1fae5" onclick="setPaidOnSpot(true)">Paid!</button>
+        </div>
+      </div>
+      <div class="field"><label>Visit notes (optional)</label>
+        <textarea id="done-notes" placeholder="e.g. back gate was locked, did front only…"></textarea>
       </div>
     </div>
-    <div class="field"><label>Visit notes (optional)</label>
-      <textarea id="done-notes" placeholder="e.g. back gate was locked, did front only…"></textarea>
-    </div>
-    <div class="modal-actions">
+    <div class="modal-actions" id="done-modal-actions">
       <button class="btn" onclick="closeDoneModal()">Cancel</button>
       <button class="btn btn-green" onclick="confirmDone()">✅ Mark done</button>
     </div>
@@ -1434,7 +1436,11 @@ async function togglePaid(id){
 function openDoneModal(id){
   doneForId=id;
   const c=customers.find(x=>x.id===id);
+  document.getElementById('done-modal-title').textContent='Mark job done';
   document.getElementById('done-modal-customer').textContent=c?c.name:'';
+  document.getElementById('done-modal-form').style.display='block';
+  document.getElementById('done-modal-actions').innerHTML=`<button class="btn" onclick="closeDoneModal()">Cancel</button>
+      <button class="btn btn-green" onclick="confirmDone()">✅ Mark done</button>`;
   document.getElementById('done-by').value=currentUserName||'Me';
   document.getElementById('done-notes').value='';
   window._paidOnSpot=false;
@@ -1465,12 +1471,23 @@ async function confirmDone(){
     if(paidNow){ c.paid=true; await db.from('customers').update({paid:true}).eq('id',c.id); }
     c.last_cleaned=today;
     await db.from('customers').update({last_cleaned:today}).eq('id',c.id);
-    closeDoneModal();
     renderCustomers();renderPayments();renderDashboard();
-    showToast(paidNow?`Done + paid: ${c.name}`:`Done: ${c.name}`);
+    showSendPrompt(c);
   }catch(err){
     showToast('Error: '+(err.message||'Could not save job'));
   }
+}
+function showSendPrompt(c){
+  const waNum=(c.whatsapp||c.phone||'').replace(/[^0-9]/g,'');
+  const msg=getMsg(c,'after'); // already says something different for paid vs unpaid
+  const label=c.paid?'💬 Send thank-you text':'💬 Send payment reminder';
+  document.getElementById('done-modal-title').textContent='✅ Marked done';
+  document.getElementById('done-modal-customer').textContent=c.name;
+  document.getElementById('done-modal-form').style.display='none';
+  document.getElementById('done-modal-actions').innerHTML=waNum
+    ? `<a href="https://wa.me/${waNum}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-full ${c.paid?'btn-green':'btn-amber'}" onclick="closeDoneModal()">${label}</a>
+       <button class="btn" style="opacity:.6" onclick="closeDoneModal()">Skip</button>`
+    : `<div style="font-size:13px;color:var(--text-muted);width:100%;text-align:center">No phone number on file</div><button class="btn btn-full" onclick="closeDoneModal()">Close</button>`;
 }
 document.getElementById('done-modal').addEventListener('click',function(e){if(e.target===this)closeDoneModal();});
 

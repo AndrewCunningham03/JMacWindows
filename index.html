@@ -1728,15 +1728,34 @@ if('caches' in window){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// On iOS, reopening the app after it's been fully closed for a while can leave
+// a SAVED session stuck trying to revalidate/refresh - that request can hang
+// indefinitely. If sign-out happened first there's no saved session to restore,
+// which is why that path always works. This timeout breaks the hang by forcing
+// a clean local sign-out (no network call, can't itself hang) so the user gets
+// a working login screen instead of an infinite spinner.
+let _initResolved=false;
+const _initTimeout=setTimeout(()=>{
+  if(_initResolved)return;
+  _initResolved=true;
+  db.auth.signOut({scope:'local'}).catch(()=>{});
+  showLogin();
+  const el=document.getElementById('login-error');
+  if(el){el.textContent='Your saved login got stuck restoring - please sign in again.';el.style.display='block';}
+},7000);
 (async()=>{
   try{
     db.auth.onAuthStateChange(async(event,session)=>{
+      if(_initResolved && event==='INITIAL_SESSION')return; // already timed out and showed login - ignore the late event
       try{
         if(event==='INITIAL_SESSION'){
+          _initResolved=true;clearTimeout(_initTimeout);
           if(session){await loadCustomers();}else{showLogin();}
         } else if(event==='SIGNED_IN'){
+          _initResolved=true;clearTimeout(_initTimeout);
           await loadCustomers();
         } else if(event==='SIGNED_OUT'){
+          _initResolved=true;clearTimeout(_initTimeout);
           showLogin();customers=[];
         }
       }catch(e){

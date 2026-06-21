@@ -332,7 +332,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <div id="loading-screen">
   <div class="spinner"></div>
   <div style="color:var(--text-muted);font-size:14px">Loading your customers…</div>
-  <button onclick="db.auth.signOut().then(()=>location.reload())" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Stuck? Tap to sign out and retry</button>
+  <button onclick="db.auth.signOut().then(()=>location.reload()).catch(()=>location.reload())" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Stuck? Tap to sign out and retry</button>
   <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},6000)</script>
 </div>
 
@@ -467,6 +467,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="dash-title">👥 Team</div>
         <div id="admin-users"></div>
         <div class="field-hint" style="margin-top:8px">New staff sign in at your site link with their own email — they appear here automatically as an Employee, then you can tap "Make admin" if needed.</div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-title">⚠️ Owing list</div>
+        <div class="field-hint" style="margin-bottom:8px">Customers who still hadn't paid when you started a "Next round". Message them, then tap Resolved once they've paid.</div>
+        <div id="admin-owing-list"></div>
       </div>
       <div class="dash-section">
         <div class="dash-title">🏠 All customers summary</div>
@@ -643,6 +648,7 @@ let histYear = new Date().getFullYear();
 let mapInstance = null;
 let mapRouteFilter = '';
 let currentUserEmail = '';
+let currentUserId = '';
 let currentUserRole = 'employee'; // 'admin' or 'employee'
 let currentUserName = '';
 
@@ -822,6 +828,7 @@ async function loadCustomers(){
   // Load user profile + role
   const {data:{user}}=await db.auth.getUser();
   currentUserEmail=user?.email||'';
+  currentUserId=user?.id||'';
   if(user){
     let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
     if(!profile){
@@ -1104,6 +1111,7 @@ function renderCustomers(){
       <div class="card-actions">
         ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-sm">📞 Call</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'before'))}" class="btn btn-sm">🔔 Coming soon</a>`:''}
+        ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'beforeTomorrow'))}" class="btn btn-sm" title="See you tomorrow message">📲 Tomorrow</a>`:''}
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ All done</a>`:''}
         ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Payment reminder</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
@@ -1328,7 +1336,7 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></span><button onclick="msgRoute('${r.replace(/\x27/g,'')}','beforeTomorrow')" class="btn btn-sm" style="font-size:12px;padding:4px 10px">📲 See you tomorrow</button></div>
+      <div class="route-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></span></div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
           <div class="order-btns">
@@ -1364,9 +1372,12 @@ async function moveCustomer(id,dir,route){
   list.splice(newIdx,0,moved);
   const updates=[];
   list.forEach((c,i)=>{
-    if(c.route_order!==i){c.route_order=i;updates.push(db.from('customers').update({route_order:i}).eq('id',c.id));}
+    if(c.route_order!==i){updates.push({c,newOrder:i});}
   });
-  await Promise.all(updates);
+  const results=await Promise.all(updates.map(u=>db.from('customers').update({route_order:u.newOrder}).eq('id',u.c.id)));
+  results.forEach((r,i)=>{ if(!r.error) updates[i].c.route_order=updates[i].newOrder; });
+  const failed=results.find(r=>r&&r.error);
+  if(failed)showToast('Some changes didn\'t save: '+failed.error.message);
   renderRoutes();
 }
 
@@ -1460,6 +1471,8 @@ function closeHowItWorks(){document.getElementById('howitworks-modal').classList
 document.getElementById('howitworks-modal').addEventListener('click',function(e){if(e.target===this)closeHowItWorks();});
 async function confirmDone(){
   const c=customers.find(x=>x.id===doneForId);if(!c)return;
+  const btn=document.querySelector('#done-modal-actions .btn-green');
+  if(btn){if(btn.disabled)return;btn.disabled=true;btn.textContent='Saving…';}
   const notes=document.getElementById('done-notes').value.trim();
   const doneBy=document.getElementById('done-by').value;
   const paidNow=window._paidOnSpot||false;
@@ -1475,6 +1488,7 @@ async function confirmDone(){
     showSendPrompt(c);
   }catch(err){
     showToast('Error: '+(err.message||'Could not save job'));
+    if(btn){btn.disabled=false;btn.textContent='✅ Mark done';}
   }
 }
 function showSendPrompt(c){
@@ -1717,6 +1731,34 @@ async function renderAdmin(){
     </div>
     ${empRows?`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px"><div style="padding:10px 0 4px;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase">This month by employee</div>${empRows}</div>`:''}`;
 
+  // Owing list — customers who were still unpaid when a route's "Next round" was started
+  try{
+    const {data:owing}=await db.from('unpaid_carryovers').select('*,customers(name,whatsapp,phone,price)').eq('resolved',false).order('created_at',{ascending:false});
+    const owingEl=document.getElementById('admin-owing-list');
+    if(!owing||!owing.length){
+      owingEl.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">✅ Nobody on the owing list</div>';
+    } else {
+      owingEl.innerHTML=`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
+        ${owing.map(row=>{
+          const cust=row.customers;
+          if(!cust)return'';
+          const waNum=(cust.whatsapp||cust.phone||'').replace(/[^0-9]/g,'');
+          const msg=carryoverMsg(cust,row);
+          return`<div class="route-item">
+            <div class="route-item-info">
+              <div class="route-item-name">${esc(cust.name)}</div>
+              <div class="route-item-addr">Missed ${row.miss_count} time(s) · owes £${row.amount_owed} · ${esc(row.route||'')}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              ${waNum?`<a href="https://wa.me/${waNum}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-sm btn-amber">💬 Message</a>`:''}
+              <button class="btn btn-sm" onclick="resolveCarryover(${row.id})">Resolved</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }catch(e){ /* table may not exist yet on older setups */ }
+
   // Route summary
   document.getElementById('admin-route-summary').innerHTML=`
     <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
@@ -1735,7 +1777,22 @@ async function renderAdmin(){
     </div>`;
 }
 
+function carryoverMsg(cust,row){
+  const first=(cust.greeting_name&&cust.greeting_name.trim())||cust.name.split(' ')[0];
+  const times=row.miss_count>1?`the last ${row.miss_count} window cleanings`:`last month's window cleaning`;
+  return`Hi ${first}! Just a heads up — you haven't paid for ${times}, so you'll be charged for ${row.miss_count+1} cleanings this time: £${row.amount_owed} total. Let me know if you have any questions. Thanks! 🪣`;
+}
+async function resolveCarryover(id){
+  const {error}=await db.from('unpaid_carryovers').update({resolved:true}).eq('id',id);
+  if(error){showToast('Error: '+error.message);return;}
+  showToast('Marked resolved');
+  renderAdmin();
+}
+
 async function setRole(userId, role){
+  if(userId===currentUserId&&role==='employee'){
+    if(!confirm('This is YOUR account. Making yourself an employee will remove your own admin access immediately. Continue?'))return;
+  }
   const {data,error}=await db.from('profiles').update({role}).eq('id',userId).select();
   if(error){showToast('Error: '+error.message);return;}
   if(!data||!data.length){showToast('Not allowed — run the admin SQL in Supabase');return;}
@@ -1746,20 +1803,34 @@ async function setRole(userId, role){
 async function newCycle(route){
   const list=customers.filter(c=>c.route===route);
   if(!list.length){showToast('No customers on this route');return;}
-  const stillOwing=list.filter(c=>!c.paid).length;
-  const warn=stillOwing?`\n\n⚠️ ${stillOwing} customer(s) still haven't paid — their unpaid jobs stay recorded in History.`:'';
+  const unpaidCustomers=list.filter(c=>!c.paid);
+  const warn=unpaidCustomers.length?`\n\n⚠️ ${unpaidCustomers.length} customer(s) still haven't paid — they'll be added to the Owing list in Admin so you can chase them up.`:'';
   if(!confirm(`Start the next round for ${route}?\n\nAll ${list.length} customers will be reset ready to clean again (marked unpaid, cleared from "done"). Your cleaning history is kept.${warn}`))return;
+
+  // Record anyone still unpaid into the owing list before wiping their paid status
+  for(const c of unpaidCustomers){
+    try{
+      const {data:existing}=await db.from('unpaid_carryovers').select('*').eq('customer_id',c.id).eq('resolved',false).maybeSingle();
+      if(existing){
+        const newCount=(existing.miss_count||1)+1;
+        await db.from('unpaid_carryovers').update({miss_count:newCount,amount_owed:Number(c.price)*(newCount+1),route}).eq('id',existing.id);
+      } else {
+        await db.from('unpaid_carryovers').insert({customer_id:c.id,route,miss_count:1,amount_owed:Number(c.price)*2});
+      }
+    }catch(e){ /* owing-list table may not exist yet — don't block the round reset */ }
+  }
+
   // Reset the whole route: unpaid + clear last_cleaned so they become due again
-  const updates=list.map(c=>{
-    c.paid=false;
-    c.last_cleaned='';
-    return db.from('customers').update({paid:false,last_cleaned:''}).eq('id',c.id);
+  // Only mutate local state for rows that actually saved, so the UI never lies about what's in the DB
+  const results=await Promise.all(list.map(c=>db.from('customers').update({paid:false,last_cleaned:''}).eq('id',c.id)));
+  let failCount=0;
+  results.forEach((r,i)=>{
+    if(r&&r.error){failCount++;}
+    else{list[i].paid=false;list[i].last_cleaned='';}
   });
-  const results=await Promise.all(updates);
-  const failed=results.find(r=>r&&r.error);
-  if(failed){showToast('Error: '+failed.error.message);return;}
+  if(failCount)showToast(`${failCount} customer(s) failed to reset — try again`);
   renderCustomers();renderPayments();renderDashboard();renderRoutes();renderAdmin();
-  showToast(`Next round started for ${route} — ${list.length} reset`);
+  if(!failCount)showToast(`Next round started for ${route} — ${list.length} reset`);
 }
 async function bulkImport(){
   const raw=document.getElementById('bulk-input').value.trim();
@@ -1824,24 +1895,15 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch
         } else if(event==='SIGNED_OUT'){
           showLogin();customers=[];
         }
-      }catch(e){console.error(e);showLogin();}
+      }catch(e){
+        console.error(e);
+        showLogin();
+        const el=document.getElementById('login-error');
+        if(el){el.textContent='Something went wrong loading your account: '+(e.message||e);el.style.display='block';}
+      }
     });
   }catch(e){showLogin();}
 })();
-function msgRoute(route,msgType){
-  const list=customers.filter(x=>x.route===route&&(x.whatsapp||x.phone));
-  if(!list.length){showToast('No customers with WhatsApp on this route');return;}
-  if(!confirm('Open WhatsApp for all '+list.length+' customers on '+route+'?'))return;
-  let i=0;
-  function openNext(){
-    if(i>=list.length){showToast('Opened '+list.length+' chats!');return;}
-    const cust=list[i++];
-    const num=(cust.whatsapp||cust.phone).replace(/[^0-9]/g,'');
-    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(getMsg(cust,msgType)),'_blank');
-    setTimeout(openNext,800);
-  }
-  openNext();
-}
 </script>
 </body>
 </html>

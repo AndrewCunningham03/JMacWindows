@@ -36,5 +36,5 @@ drop policy if exists "profiles_update_admin" on profiles;
 create policy "profiles_update_admin" on profiles
   for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
--- Make yourself admin — replace with YOUR actual login email
-update profiles set role = 'admin' where email = 'andrewcunningham9911@hotmail.com';
+-- Make yourself admin — replace YOUR_EMAIL_HERE with the email you log into the app with
+update profiles set role = 'admin' where email = 'YOUR_EMAIL_HERE';

@@ -331,9 +331,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <!-- LOADING -->
 <div id="loading-screen">
   <div class="spinner"></div>
-  <div style="color:var(--text-muted);font-size:14px">Loading your customers…</div>
-  <button onclick="db.auth.signOut().then(()=>location.reload()).catch(()=>location.reload())" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Still stuck? Tap to sign out and retry</button>
-  <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},14000)</script>
+  <div style="color:var(--text-muted);font-size:14px" id="loading-text">Loading your customers…</div>
+  <button onclick="location.reload()" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Tap to retry</button>
+  <button onclick="try{db.auth.signOut()}catch(e){};location.reload()" style="margin-top:8px;background:none;border:none;font-size:12px;color:var(--text-muted);text-decoration:underline;cursor:pointer;display:none" id="escape-btn-2">Still stuck after retrying? Tap to sign out fully</button>
+  <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},5000)
+  setTimeout(()=>{const b=document.getElementById('escape-btn-2');if(b)b.style.display='block';},20000)</script>
 </div>
 
 <!-- APP -->
@@ -664,18 +666,31 @@ function showLoading(){
   startLoadWatchdog();
 }
 function showApp(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.add('show');clearLoadWatchdog();}
-// On iOS, reopening a fully-closed PWA can leave the Supabase client stuck mid-request
-// (the connection isn't fully ready yet). Instead of hanging forever, auto-reload once
-// after a short wait - this almost always clears it without needing to log in again.
+
+// On iOS, reopening a fully-closed PWA can leave the Supabase client stuck mid-request,
+// often simply because there's no internet connection yet (phone just woke up, signal
+// reconnecting). Recovery never depends on the network being up - it just reloads.
 let _loadWatchdog=null;
 function startLoadWatchdog(){
   clearLoadWatchdog();
-  _loadWatchdog=setTimeout(()=>{ if(!sessionStorage.getItem('_reloadedOnce')){ sessionStorage.setItem('_reloadedOnce','1'); location.reload(); } },8000);
+  updateLoadingText();
+  window.addEventListener('online',onConnectionRestored);
+  // Keep retrying every 6s. Reloading repeatedly is harmless - if it's a real hang
+  // each reload gives the connection another chance to settle.
+  _loadWatchdog=setTimeout(()=>{ if(navigator.onLine!==false) location.reload(); },6000);
 }
 function clearLoadWatchdog(){
   if(_loadWatchdog){clearTimeout(_loadWatchdog);_loadWatchdog=null;}
-  sessionStorage.removeItem('_reloadedOnce');
+  window.removeEventListener('online',onConnectionRestored);
 }
+function onConnectionRestored(){ location.reload(); }
+function updateLoadingText(){
+  const el=document.getElementById('loading-text');
+  if(!el)return;
+  el.textContent=navigator.onLine===false?'No internet connection — waiting to reconnect…':'Loading your customers…';
+}
+window.addEventListener('offline',updateLoadingText);
+window.addEventListener('online',updateLoadingText);
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadCustomers(){

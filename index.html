@@ -477,16 +477,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="dash-title">🏠 All customers summary</div>
         <div id="admin-route-summary"></div>
       </div>
-      <div class="dash-section">
-        <div class="dash-title">📥 Bulk import customers</div>
-        <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:14px">
-          <div class="field-hint" style="margin-bottom:8px">Paste rows from a spreadsheet — one customer per line. Columns in this order (Tab or comma separated):</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">Name · Address · Phone · Price · Route · Frequency</div>
-          <textarea id="bulk-input" placeholder="Paula Beggan&#9;Keady&#9;+447493204539&#9;25&#9;Keady / Derrynoose&#9;monthly" style="width:100%;min-height:110px;padding:10px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:13px;font-family:monospace;outline:none;resize:vertical;background:var(--white);color:var(--text)"></textarea>
-          <div class="field-hint" style="margin:8px 0">Only Name is required. Frequency is "monthly" or "2months" (defaults to monthly).</div>
-          <button class="btn btn-blue btn-full" onclick="bulkImport()">Import customers</button>
-        </div>
-      </div>
     </div>
 
   </div>
@@ -1731,10 +1721,12 @@ async function renderAdmin(){
     ${empRows?`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px"><div style="padding:10px 0 4px;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase">This month by employee</div>${empRows}</div>`:''}`;
 
   // Owing list — customers who were still unpaid when a route's "Next round" was started
-  try{
-    const {data:owing}=await db.from('unpaid_carryovers').select('*,customers(name,whatsapp,phone,price,greeting_name,revolut_link,stripe_link)').eq('resolved',false).order('created_at',{ascending:false});
+  {
+    const {data:owing,error:owingErr}=await db.from('unpaid_carryovers').select('*,customers(name,whatsapp,phone,price,greeting_name,revolut_link,stripe_link)').eq('resolved',false).order('created_at',{ascending:false});
     const owingEl=document.getElementById('admin-owing-list');
-    if(!owing||!owing.length){
+    if(owingErr){
+      owingEl.innerHTML=`<div style="color:var(--amber);font-size:13px;padding:8px 0">⚠️ Owing list isn't set up yet — run <strong>owing_list.sql</strong> in Supabase once to enable it.</div>`;
+    } else if(!owing||!owing.length){
       owingEl.innerHTML='<div style="color:var(--green);font-size:14px;padding:8px 0">✅ Nobody on the owing list</div>';
     } else {
       owingEl.innerHTML=`<div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
@@ -1756,7 +1748,7 @@ async function renderAdmin(){
         }).join('')}
       </div>`;
     }
-  }catch(e){ /* table may not exist yet on older setups */ }
+  }
 
   // Route summary
   document.getElementById('admin-route-summary').innerHTML=`
@@ -1809,16 +1801,18 @@ async function newCycle(route){
   if(!confirm(`Start the next round for ${route}?\n\nAll ${list.length} customers will be reset ready to clean again (marked unpaid, cleared from "done"). Your cleaning history is kept.${warn}`))return;
 
   // Record anyone still unpaid into the owing list before wiping their paid status
+  let owingListBroken=false;
   for(const c of unpaidCustomers){
-    try{
-      const {data:existing}=await db.from('unpaid_carryovers').select('*').eq('customer_id',c.id).eq('resolved',false).maybeSingle();
-      if(existing){
-        const newCount=(existing.miss_count||1)+1;
-        await db.from('unpaid_carryovers').update({miss_count:newCount,amount_owed:Number(c.price)*(newCount+1),route}).eq('id',existing.id);
-      } else {
-        await db.from('unpaid_carryovers').insert({customer_id:c.id,route,miss_count:1,amount_owed:Number(c.price)*2});
-      }
-    }catch(e){ /* owing-list table may not exist yet — don't block the round reset */ }
+    const {data:existing,error:selErr}=await db.from('unpaid_carryovers').select('*').eq('customer_id',c.id).eq('resolved',false).maybeSingle();
+    if(selErr){owingListBroken=true;continue;}
+    if(existing){
+      const newCount=(existing.miss_count||1)+1;
+      const {error:updErr}=await db.from('unpaid_carryovers').update({miss_count:newCount,amount_owed:Number(c.price)*(newCount+1),route}).eq('id',existing.id);
+      if(updErr)owingListBroken=true;
+    } else {
+      const {error:insErr}=await db.from('unpaid_carryovers').insert({customer_id:c.id,route,miss_count:1,amount_owed:Number(c.price)*2});
+      if(insErr)owingListBroken=true;
+    }
   }
 
   // Reset the whole route: unpaid + clear last_cleaned so they become due again
@@ -1829,49 +1823,10 @@ async function newCycle(route){
     if(r&&r.error){failCount++;}
     else{list[i].paid=false;list[i].last_cleaned='';}
   });
-  if(failCount)showToast(`${failCount} customer(s) failed to reset — try again`);
   renderCustomers();renderPayments();renderDashboard();renderRoutes();renderAdmin();
-  if(!failCount)showToast(`Next round started for ${route} — ${list.length} reset`);
-}
-async function bulkImport(){
-  const raw=document.getElementById('bulk-input').value.trim();
-  if(!raw){showToast('Paste some rows first');return;}
-  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  const rows=[];
-  for(const line of lines){
-    const parts=line.includes('\t')?line.split('\t'):line.split(',');
-    const name=(parts[0]||'').trim();
-    if(!name)continue;
-    let route=(parts[4]||'').trim();
-    const match=ROUTES.find(r=>r.toLowerCase()===route.toLowerCase());
-    route=match||route||ROUTES[0];
-    let freq=(parts[5]||'').trim().toLowerCase();
-    freq=(freq.includes('2')||freq.includes('two'))?'2months':'monthly';
-    rows.push({
-      name,
-      addr:(parts[1]||'').trim(),
-      phone:(parts[2]||'').trim(),
-      price:parseFloat(parts[3])||20,
-      route,freq,
-      paid:false,last_cleaned:'',route_order:999
-    });
-  }
-  if(!rows.length){showToast('No valid rows found');return;}
-  if(!confirm(`Import ${rows.length} customer(s)?`))return;
-  const btn=document.querySelector('[onclick="bulkImport()"]');
-  if(btn){btn.disabled=true;btn.textContent='Importing…';}
-  try{
-    const {data:inserted,error}=await db.from('customers').insert(rows).select();
-    if(error)throw error;
-    customers.push(...(inserted||[]));
-    document.getElementById('bulk-input').value='';
-    renderCustomers();renderDashboard();renderAdmin();
-    showToast(`Imported ${(inserted||[]).length} customers ✓`);
-  }catch(err){
-    showToast('Error: '+(err.message||'Import failed'));
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='Import customers';}
-  }
+  if(failCount){showToast(`${failCount} customer(s) failed to reset — try again`);}
+  else if(owingListBroken){showToast('Round reset, but owing list isn\'t set up — run owing_list.sql in Supabase');}
+  else{showToast(`Next round started for ${route} — ${list.length} reset`);}
 }
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

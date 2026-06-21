@@ -332,8 +332,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <div id="loading-screen">
   <div class="spinner"></div>
   <div style="color:var(--text-muted);font-size:14px">Loading your customers…</div>
-  <button onclick="db.auth.signOut().then(()=>location.reload()).catch(()=>location.reload())" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Stuck? Tap to sign out and retry</button>
-  <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},6000)</script>
+  <button onclick="db.auth.signOut().then(()=>location.reload()).catch(()=>location.reload())" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Still stuck? Tap to sign out and retry</button>
+  <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},14000)</script>
 </div>
 
 <!-- APP -->
@@ -656,9 +656,26 @@ async function logout(){
   if(!confirm('Sign out?'))return;
   await db.auth.signOut();
 }
-function showLogin(){document.getElementById('login-screen').classList.add('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.remove('show');}
-function showLoading(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.add('show');document.getElementById('app').classList.remove('show');}
-function showApp(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.add('show');}
+function showLogin(){document.getElementById('login-screen').classList.add('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.remove('show');clearLoadWatchdog();}
+function showLoading(){
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('loading-screen').classList.add('show');
+  document.getElementById('app').classList.remove('show');
+  startLoadWatchdog();
+}
+function showApp(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.add('show');clearLoadWatchdog();}
+// On iOS, reopening a fully-closed PWA can leave the Supabase client stuck mid-request
+// (the connection isn't fully ready yet). Instead of hanging forever, auto-reload once
+// after a short wait - this almost always clears it without needing to log in again.
+let _loadWatchdog=null;
+function startLoadWatchdog(){
+  clearLoadWatchdog();
+  _loadWatchdog=setTimeout(()=>{ if(!sessionStorage.getItem('_reloadedOnce')){ sessionStorage.setItem('_reloadedOnce','1'); location.reload(); } },8000);
+}
+function clearLoadWatchdog(){
+  if(_loadWatchdog){clearTimeout(_loadWatchdog);_loadWatchdog=null;}
+  sessionStorage.removeItem('_reloadedOnce');
+}
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadCustomers(){

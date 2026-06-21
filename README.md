@@ -50,6 +50,26 @@ the owner resets it in Supabase → Authentication → Users → that person →
 
 ---
 
+## ⚠️ If the app gets stuck on a loading/spinning screen and won't open
+
+This is the single most important troubleshooting step. It usually happens after
+the app has been updated, or randomly on iPhone after the app has been fully
+closed (swiped away) for a while.
+
+**Fix it like this, on the phone that's stuck:**
+1. **Delete the app icon** from the home screen (long-press it → Remove from Home Screen)
+2. Go to **Settings app → Safari → Advanced → Website Data**
+3. Search for **"github.io"**, swipe left on it → **Delete**
+4. Open **Safari**, go to the live link (https://andrewcunningham03.github.io/JMacWindows/)
+5. **Log in again** (clearing website data also clears the saved login — this is expected, just log back in once)
+6. **Share → Add to Home Screen** again
+
+This clears out any stuck cached version of the app and fixes it for good. If
+it ever happens again to anyone on the team, this is the fix — no need to
+re-diagnose it from scratch.
+
+---
+
 ## Behind the scenes (for whoever maintains it)
 
 - **Frontend:** one file, `index.html` (plain HTML/JS, no build step). Deployed

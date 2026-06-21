@@ -303,6 +303,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .today-info{flex:1;min-width:0}
 .today-name{font-weight:700;font-size:15px}
 .today-addr{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-date{font-size:11px;color:var(--blue-dark);font-weight:600;margin-top:1px}
+.today-stop.done .today-date{color:var(--green)}
 .today-acts{display:flex;gap:6px;flex-shrink:0}
 /* Tappable paid pill */
 .badge-btn{background:none;border:none;padding:0;cursor:pointer;transition:transform .1s}
@@ -356,7 +358,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="tab active" id="tab-today">
       <div class="dash-week-card" id="dash-week-card"></div>
       <div class="dash-section">
-        <div class="dash-title">🚐 Today's round</div>
+        <div class="dash-title" style="display:flex;align-items:center;gap:6px;justify-content:space-between">
+          <span>🚐 Today's round</span>
+          <button class="btn btn-sm" style="font-weight:600" onclick="showHowItWorks()" title="How this works">ⓘ How this works</button>
+        </div>
         <div class="filter-row" id="today-route-chips"></div>
         <div id="today-round"></div>
       </div>
@@ -556,6 +561,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   </div>
   <div class="screen-footer">
     <button class="btn btn-full btn-blue" id="save-btn" onclick="saveCustomer()">Save customer</button>
+  </div>
+</div>
+
+<!-- HOW IT WORKS MODAL -->
+<div class="modal-overlay" id="howitworks-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">How the round works</div>
+    <div style="font-size:14px;line-height:1.7;color:var(--text)">
+      <p style="margin-bottom:12px"><strong>1. Tap "Done"</strong> on a customer once you've cleaned their windows. It records the date and (if you collected cash) marks them paid.</p>
+      <p style="margin-bottom:12px"><strong>2. They stay "done"</strong> until the next round starts — even if you cleaned them yesterday, not just today. The ✓ and date next to their name show when it was actually done.</p>
+      <p style="margin-bottom:12px"><strong>3. "↻ Next round"</strong> (in the Routes tab, admin only) resets a whole route back to not-done and unpaid, ready to clean again. Nothing is deleted — every past job is still saved in History.</p>
+      <p style="margin-bottom:0"><strong>4. "Overdue"</strong> just means it's been longer than usual since their last clean (35 days for monthly, 70 for every-2-months).</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-blue btn-full" onclick="closeHowItWorks()">Got it</button>
+    </div>
   </div>
 </div>
 
@@ -938,7 +960,7 @@ async function renderDashboard(){
           <div class="overdue-name">${esc(c.name)}</div>
           <div class="overdue-meta">${esc(c.route)} · ${c.freq==='monthly'?'Monthly':'2-month'}</div>
         </div>
-        <span class="overdue-days">${days===null?'Never':days+'d ago'}</span>
+        <span class="overdue-days">${days===null?'Never cleaned':fmtDate(c.last_cleaned)+' ('+days+'d)'}</span>
       </div>`;
     }).join('')}
   </div>
@@ -962,9 +984,10 @@ function renderTodayRound(){
   if(!todayRoute){const saved=localStorage.getItem('todayRoute');if(saved&&wkRoutes.includes(saved))todayRoute=saved;}
   if(!wkRoutes.includes(todayRoute))todayRoute=wkRoutes[0]||'';
   const chipEl=document.getElementById('today-route-chips');
+  // "done this round" = cleaned since the route was last reset (last_cleaned set), not just literally today
   chipEl.innerHTML=wkRoutes.map(r=>{
     const rl=customers.filter(c=>c.route===r);
-    const rd=rl.filter(c=>c.last_cleaned===todayStr).length;
+    const rd=rl.filter(c=>c.last_cleaned).length;
     const complete=rl.length&&rd===rl.length;
     return`<button class="chip ${r===todayRoute?'active':''}" onclick="setTodayRoute('${r.replace(/'/g,"\\'")}')">${complete?'✓ ':''}${esc(r)}${rl.length?` (${rd}/${rl.length})`:''}</button>`;
   }).join('');
@@ -972,20 +995,23 @@ function renderTodayRound(){
   if(!todayRoute){el.innerHTML='<div class="empty" style="padding:20px"><div class="empty-icon">📭</div>No routes scheduled this week</div>';return;}
   const list=[...customers.filter(c=>c.route===todayRoute)].sort((a,b)=>(a.route_order||999)-(b.route_order||999));
   if(!list.length){el.innerHTML='<div class="empty" style="padding:20px">No customers on this route yet</div>';return;}
-  const doneCount=list.filter(c=>c.last_cleaned===todayStr).length;
+  const doneCount=list.filter(c=>c.last_cleaned).length;
   const allDone=doneCount===list.length;
   const collectedToday=list.filter(c=>c.last_cleaned===todayStr&&c.paid&&currentUserRole==='admin').reduce((s,c)=>s+Number(c.price||0),0);
   el.innerHTML=`
-    ${allDone?`<div style="background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:16px;text-align:center;font-weight:700;margin-bottom:12px">🎉 ${esc(todayRoute)} all done!${currentUserRole==='admin'&&collectedToday?`<div style="font-weight:600;font-size:13px;margin-top:4px">£${collectedToday} collected today</div>`:''}</div>`:`<button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${doneCount} of ${list.length} done today</div>`}
+    ${allDone?`<div style="background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:16px;text-align:center;font-weight:700;margin-bottom:12px">🎉 ${esc(todayRoute)} all done this round!${currentUserRole==='admin'?`<div style="font-weight:600;font-size:13px;margin-top:4px">Tap "↻ Next round" in Routes when ready to start again${collectedToday?` · £${collectedToday} collected today`:''}</div>`:''}</div>`:`<button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${doneCount} of ${list.length} done this round</div>`}
     ${list.map((c,i)=>{
-      const done=c.last_cleaned===todayStr;
+      const done=!!c.last_cleaned;
+      const doneTodayFlag=c.last_cleaned===todayStr;
       const waNum=c.whatsapp||c.phone;
+      const dateLabel=done?(doneTodayFlag?'Today':fmtDate(c.last_cleaned)):'Not done yet';
       return`<div class="today-stop${done?' done':''}">
         <div class="today-num">${done?'✓':i+1}</div>
         <div class="today-info">
           <div class="today-name">${esc(c.name)}</div>
           <div class="today-addr">${esc(c.addr||'No address')}</div>
+          <div class="today-date">${dateLabel}</div>
         </div>
         <div class="today-acts">
           <button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change">${c.paid?'<span class="badge badge-green">✓ Paid</span>':'<span class="badge badge-red">£</span>'}</button>
@@ -994,6 +1020,15 @@ function renderTodayRound(){
         </div>
       </div>`;
     }).join('')}`;
+}
+// Turns a dd/mm/yyyy string into "15 Jun" for easy reading
+function fmtDate(dmy){
+  if(!dmy)return'';
+  const parts=dmy.split('/');
+  if(parts.length<3)return dmy;
+  const d=new Date(+parts[2],+parts[1]-1,+parts[0]);
+  if(isNaN(d))return dmy;
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
 function setTodayRoute(r){todayRoute=r;try{localStorage.setItem('todayRoute',r);}catch(e){}renderTodayRound();}
 function navigateRouteByName(route){
@@ -1048,7 +1083,7 @@ function renderCustomers(){
           <div class="card-name">${esc(c.name)}${od?' <span class="badge badge-red" style="font-size:10px;padding:1px 6px">OVERDUE</span>':''}</div>
           <div class="card-addr">${esc(c.addr||'No address saved')}</div>
           <div class="card-detail">
-            ${days!==null?`<span>🗓 ${days}d ago</span>`:'<span style="color:var(--amber)">Never cleaned</span>'}
+            ${days!==null?`<span>🗓 ${fmtDate(c.last_cleaned)} (${days}d ago)</span>`:'<span style="color:var(--amber)">Never cleaned</span>'}
             ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
             ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
           </div>
@@ -1182,6 +1217,7 @@ function showStop(idx){
 
   const tags=[];
   if(isOverdue(c)) tags.push(`<span class="badge badge-red">OVERDUE</span>`);
+  tags.push(`<span class="badge badge-gray">🗓 ${c.last_cleaned?fmtDate(c.last_cleaned):'Never cleaned'}</span>`);
   if(currentUserRole==='admin'){tags.push(`<button class="badge-btn" onclick="togglePaid(${c.id})">${c.paid?`<span class="badge badge-green">✓ Paid £${c.price}</span>`:`<span class="badge badge-red">£${c.price} · Tap if paid</span>`}</button>`);}else{tags.push(`<button class="badge-btn" onclick="togglePaid(${c.id})">${c.paid?`<span class="badge badge-green">&#10003; Paid</span>`:`<span class="badge badge-amber">Tap if paid</span>`}</button>`);}
   if(c.gate_code) tags.push(`<span class="badge badge-purple">🔑 ${esc(c.gate_code)}</span>`);
   if(c.windows_count) tags.push(`<span class="badge badge-gray">🪟 ${c.windows_count} windows</span>`);
@@ -1364,7 +1400,7 @@ function renderPayments(){
         <div>
           <div class="card-name">${esc(c.name)} ${isOverdue(c)?'<span class="badge badge-red" style="font-size:10px">OVERDUE</span>':''}</div>
           <div class="card-addr">${esc(c.route)}</div>
-          ${c.last_cleaned?`<div style="font-size:12px;color:var(--text-muted)">Last done: ${c.last_cleaned}</div>`:''}
+          ${c.last_cleaned?`<div style="font-size:12px;color:var(--text-muted)">Last cleaned: ${fmtDate(c.last_cleaned)}</div>`:'<div style="font-size:12px;color:var(--amber)">Never cleaned</div>'}
         </div>
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:700">£${c.price}</div>
@@ -1413,6 +1449,9 @@ function setPaidOnSpot(val){
   document.getElementById('pay-btn-yes').style.fontWeight=val?'700':'normal';
 }
 function closeDoneModal(){document.getElementById('done-modal').classList.remove('open');}
+function showHowItWorks(){document.getElementById('howitworks-modal').classList.add('open');}
+function closeHowItWorks(){document.getElementById('howitworks-modal').classList.remove('open');}
+document.getElementById('howitworks-modal').addEventListener('click',function(e){if(e.target===this)closeHowItWorks();});
 async function confirmDone(){
   const c=customers.find(x=>x.id===doneForId);if(!c)return;
   const notes=document.getElementById('done-notes').value.trim();

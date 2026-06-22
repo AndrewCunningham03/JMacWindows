@@ -953,6 +953,7 @@ function renderTodayRound(){
           <button class="badge-btn" onclick="togglePaid(${c.id})" title="Tap to change">${c.paid?'<span class="badge badge-green">✓ Paid</span>':'<span class="badge badge-red">£</span>'}</button>
           ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green" title="All done message">✅</a>`:''}
           ${done?'':`<button class="btn btn-sm btn-blue" onclick="openDoneModal(${c.id})">Done</button>`}
+          ${done?'':`<button class="btn btn-sm" onclick="skipCustomer(${c.id})" title="Skip this round">⏭ Skip</button>`}
         </div>
       </div>`;
     }).join('')}`;
@@ -1041,6 +1042,7 @@ function renderCustomers(){
         ${waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'after'))}" class="btn btn-sm btn-green">✅ All done</a>`:''}
         ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Payment reminder</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
+        <button onclick="skipCustomer(${c.id})" class="btn btn-sm" title="Skip this round">⏭ Skip this round</button>
       </div>
     </div>`;
   }).join('');
@@ -1167,6 +1169,7 @@ function showStop(idx){
   if(waNum) actions.push(`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}" class="btn btn-sm btn-green">💬 WhatsApp</a>`);
   if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">🗺️ Navigate</a>`);
   actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
+  actions.push(`<button onclick="skipCustomer(${c.id})" class="btn btn-sm" title="Skip this round">⏭ Skip</button>`);
   document.getElementById('stop-actions').innerHTML=actions.join('');
   document.getElementById('stop-card').classList.add('active');
 }
@@ -1344,6 +1347,19 @@ function renderPayments(){
         ${!c.paid&&getPayLink(c)?`<a href="${esc(getPayLink(c))}" class="btn btn-sm btn-purple" target="_blank">💳 Pay link</a>`:''}
       </div>
     </div>`).join('');
+}
+async function skipCustomer(id){
+  const c=customers.find(x=>x.id===id);if(!c)return;
+  if(!confirm(`Skip ${c.name} this round? They won't be charged and no job is logged — just marked off so they don't show as overdue until next round.`))return;
+  const today=new Date().toLocaleDateString('en-GB');
+  const prevLastCleaned=c.last_cleaned;
+  c.last_cleaned=today;
+  const {error}=await db.from('customers').update({last_cleaned:today}).eq('id',id);
+  if(error){c.last_cleaned=prevLastCleaned;showToast('Error: '+error.message);return;}
+  renderCustomers();renderDashboard();renderRoutes();
+  const sc=document.getElementById('stop-card');
+  if(sc&&sc.classList.contains('active')&&routeStops.length)showStop(currentStopIdx);
+  showToast(`Skipped: ${c.name} this round`);
 }
 async function togglePaid(id){
   const c=customers.find(x=>x.id===id);if(!c)return;

@@ -1779,15 +1779,35 @@ const _initTimeout=setTimeout(()=>{
   const el=document.getElementById('login-error');
   if(el){el.textContent='Your saved login got stuck restoring - please sign in again.';el.style.display='block';}
 },7000);
+// Belt-and-braces: actively read the session (getSession reads local storage,
+// no network) raced against a 5s cap. Whichever of this or onAuthStateChange
+// resolves first wins (guarded by _initResolved), so we never wait passively
+// for an event that might not fire on a frozen-then-resumed page.
+(async()=>{
+  try{
+    const res=await Promise.race([
+      db.auth.getSession(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('getSession timeout')),5000))
+    ]);
+    if(_initResolved)return;
+    _initResolved=true;clearTimeout(_initTimeout);
+    if(res&&res.data&&res.data.session){await loadCustomers();}else{showLogin();}
+  }catch(e){
+    if(_initResolved)return;
+    _initResolved=true;clearTimeout(_initTimeout);
+    db.auth.signOut({scope:'local'}).catch(()=>{});
+    showLogin();
+    const el=document.getElementById('login-error');
+    if(el){el.textContent='Your saved login got stuck restoring - please sign in again.';el.style.display='block';}
+  }
+})();
 (async()=>{
   try{
     db.auth.onAuthStateChange(async(event,session)=>{
-      if(_initResolved && event==='INITIAL_SESSION')return; // already timed out and showed login - ignore the late event
+      // INITIAL_SESSION is handled by the getSession() race above; only act on real changes
+      if(event==='INITIAL_SESSION')return;
       try{
-        if(event==='INITIAL_SESSION'){
-          _initResolved=true;clearTimeout(_initTimeout);
-          if(session){await loadCustomers();}else{showLogin();}
-        } else if(event==='SIGNED_IN'){
+        if(event==='SIGNED_IN'){
           _initResolved=true;clearTimeout(_initTimeout);
           await loadCustomers();
         } else if(event==='SIGNED_OUT'){

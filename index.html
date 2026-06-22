@@ -861,7 +861,11 @@ async function renderDashboard(){
   // Earnings from cleaning_history this month � survives cycle resets
   const now=new Date();
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
-  const {data:thisMonthJobs}=await db.from('cleaning_history').select('price').gte('cleaned_date',monthStart);
+  let thisMonthJobs=[];
+  try{
+    const r=await withTimeout(db.from('cleaning_history').select('price').gte('cleaned_date',monthStart),12000,'Loading earnings');
+    thisMonthJobs=(r&&r.data)||[];
+  }catch(e){console.error(e);}
   const earned=(thisMonthJobs||[]).reduce((s,j)=>s+Number(j.price),0);
 
   document.getElementById('dash-week-card').innerHTML=`

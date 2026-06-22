@@ -325,7 +325,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="btn btn-blue btn-full" onclick="login()" style="font-size:15px;padding:13px;margin-top:4px">Sign In</button>
-    <div style="text-align:center;font-size:11px;color:var(--text-muted);opacity:.6;margin-top:14px">v11</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);opacity:.6;margin-top:14px">v12</div>
   </div>
 </div>
 
@@ -335,7 +335,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div style="color:var(--text-muted);font-size:14px" id="loading-text">Loading your customers…</div>
   <button onclick="location.reload()" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Tap to retry</button>
   <button onclick="try{db.auth.signOut()}catch(e){};location.reload()" style="margin-top:8px;background:none;border:none;font-size:12px;color:var(--text-muted);text-decoration:underline;cursor:pointer;display:none" id="escape-btn-2">Still stuck after retrying? Tap to sign out fully</button>
-  <div style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-muted);opacity:.6">v11</div>
+  <div style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-muted);opacity:.6">v12</div>
   <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},5000)
   setTimeout(()=>{const b=document.getElementById('escape-btn-2');if(b)b.style.display='block';},20000)</script>
 </div>
@@ -616,16 +616,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 const SUPABASE_URL  = 'https://xkcottkbmjlvqempqlsx.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_OKoXX-AnIf1ci3yfzwg7DQ_Pygnu4rk';
 const { createClient } = supabase;
-// Session IS saved so you stay logged in when you leave for WhatsApp / a call /
-// Google Maps and come back, and across app reopens. The hang this used to cause
-// is prevented elsewhere by: (1) getSession() [local storage read] not getUser()
-// [network] on startup, (2) a no-op Web Locks lock so token refresh can't get
-// stuck, and (3) hard timeouts on every startup network call plus a pageshow
-// reload - so even a slow restore recovers in a few seconds instead of spinning
-// forever. Stays logged in without the freeze.
+// persistSession is OFF on purpose. Restoring a SAVED Supabase session on reopen
+// is exactly what hangs on an iOS home-screen PWA. Instead the app stores the
+// login credentials locally and silently signs in FRESH on each open (see the
+// auto-login block at the bottom) - a fresh sign-in is reliable and can't get
+// stuck the way a session restore does. autoRefreshToken keeps the in-memory
+// token valid during a long round; the no-op lock keeps that refresh off the
+// Web Locks API that freezes on iOS.
 const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    persistSession: true,
+    persistSession: false,
     autoRefreshToken: true,
     detectSessionInUrl: false,
     lock: async (_name, _acquireTimeout, fn) => await fn()
@@ -668,11 +668,24 @@ async function login(){
   errEl.style.display='none';
   if(!email||!pwd){errEl.textContent='Please enter email and password';errEl.style.display='block';return;}
   const {error}=await db.auth.signInWithPassword({email,password:pwd});
-  if(error){errEl.textContent=error.message;errEl.style.display='block';}
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  saveCreds(email,pwd); // remember so the app can log itself back in on reopen
 }
+// Credentials are stored locally so the app can silently sign back in on reopen
+// instead of restoring a saved Supabase session (which hangs on iOS PWAs).
+// Lightly obfuscated, not strong encryption - fine for a small 2-person app.
+function saveCreds(email,pwd){
+  try{localStorage.setItem('_cred',btoa(unescape(encodeURIComponent(email+'\n'+pwd))));}catch(e){}
+}
+function getCreds(){
+  try{const v=localStorage.getItem('_cred');if(!v)return null;const s=decodeURIComponent(escape(atob(v)));const i=s.indexOf('\n');return{email:s.slice(0,i),pwd:s.slice(i+1)};}catch(e){return null;}
+}
+function clearCreds(){try{localStorage.removeItem('_cred');}catch(e){}}
 async function logout(){
   if(!confirm('Sign out?'))return;
-  await db.auth.signOut();
+  clearCreds();
+  await db.auth.signOut().catch(()=>{});
+  location.reload();
 }
 function showLogin(){document.getElementById('login-screen').classList.add('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.remove('show');clearLoadWatchdog();}
 function showLoading(){
@@ -683,27 +696,14 @@ function showLoading(){
 }
 function showApp(){document.getElementById('login-screen').classList.remove('show');document.getElementById('loading-screen').classList.remove('show');document.getElementById('app').classList.add('show');clearLoadWatchdog();}
 
-// On iOS, reopening a fully-closed PWA can leave the Supabase client stuck mid-request,
-// often simply because there's no internet connection yet (phone just woke up, signal
-// reconnecting). Recovery never depends on the network being up - it just reloads.
-let _loadWatchdog=null;
-function startLoadWatchdog(){
-  clearLoadWatchdog();
-  updateLoadingText();
-  window.addEventListener('online',onConnectionRestored);
-  // Keep retrying every 6s. Reloading repeatedly is harmless - if it's a real hang
-  // each reload gives the connection another chance to settle.
-  _loadWatchdog=setTimeout(()=>{ if(navigator.onLine!==false) location.reload(); },6000);
-}
-function clearLoadWatchdog(){
-  if(_loadWatchdog){clearTimeout(_loadWatchdog);_loadWatchdog=null;}
-  window.removeEventListener('online',onConnectionRestored);
-}
-function onConnectionRestored(){ location.reload(); }
+// (Old reload-watchdog removed - it conflicted with the auto-login wait. The
+// auto-login flow has its own timeout, and a fresh page load never hangs.)
+function startLoadWatchdog(){}
+function clearLoadWatchdog(){}
 function updateLoadingText(){
   const el=document.getElementById('loading-text');
   if(!el)return;
-  el.textContent=navigator.onLine===false?'No internet connection — waiting to reconnect…':'Loading your customers…';
+  el.textContent=navigator.onLine===false?'No internet connection — waiting to reconnect…':'Loading…';
 }
 window.addEventListener('offline',updateLoadingText);
 window.addEventListener('online',updateLoadingText);
@@ -1787,79 +1787,43 @@ if('caches' in window){
 // running during the freeze. So instead of relying on a timer surviving the
 // freeze, listen for the browser's own lifecycle signal that fires the moment
 // a frozen page is restored, and force a hard, guaranteed-fresh reload then.
+// If a frozen page is restored from iOS's cache, force one fresh load so the
+// auto-login flow runs cleanly instead of resuming a half-frozen JS context.
 window.addEventListener('pageshow', function(e){
   if(e.persisted){ location.reload(); }
 });
-// Backup: if the tab/app becomes visible again and we're still stuck showing
-// the loading spinner (e.g. pageshow didn't fire as persisted for some reason),
-// force a reload after a short grace period to let a genuinely-fast load finish.
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState==='visible'){
-    setTimeout(()=>{
-      const loading=document.getElementById('loading-screen');
-      if(loading && loading.classList.contains('show')) location.reload();
-    },3000);
-  }
+
+// A successful sign-in (manual OR auto) fires SIGNED_IN -> load the app.
+db.auth.onAuthStateChange((event)=>{
+  if(event==='SIGNED_IN'){ loadCustomers(); }
+  else if(event==='SIGNED_OUT'){ showLogin(); customers=[]; }
 });
 
-// On iOS, reopening the app after it's been fully closed for a while can leave
-// a SAVED session stuck trying to revalidate/refresh - that request can hang
-// indefinitely. If sign-out happened first there's no saved session to restore,
-// which is why that path always works. This timeout breaks the hang by forcing
-// a clean local sign-out (no network call, can't itself hang) so the user gets
-// a working login screen instead of an infinite spinner.
-let _initResolved=false;
-const _initTimeout=setTimeout(()=>{
-  if(_initResolved)return;
-  _initResolved=true;
-  db.auth.signOut({scope:'local'}).catch(()=>{});
-  showLogin();
-  const el=document.getElementById('login-error');
-  if(el){el.textContent='Your saved login got stuck restoring - please sign in again.';el.style.display='block';}
-},7000);
-// Belt-and-braces: actively read the session (getSession reads local storage,
-// no network) raced against a 5s cap. Whichever of this or onAuthStateChange
-// resolves first wins (guarded by _initResolved), so we never wait passively
-// for an event that might not fire on a frozen-then-resumed page.
+// AUTO-LOGIN: on every open, if we have saved credentials, sign in fresh in the
+// background (no session restore = no iOS hang). The login fields are pre-filled
+// so if the silent sign-in can't finish (no signal), the user just taps Sign In.
 (async()=>{
+  const creds=getCreds();
+  if(!creds){ showLogin(); return; }
+  const eEl=document.getElementById('login-email'); if(eEl)eEl.value=creds.email;
+  const pEl=document.getElementById('login-password'); if(pEl)pEl.value=creds.pwd;
+  showLoading();
   try{
-    const res=await Promise.race([
-      db.auth.getSession(),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('getSession timeout')),5000))
-    ]);
-    if(_initResolved)return;
-    _initResolved=true;clearTimeout(_initTimeout);
-    if(res&&res.data&&res.data.session){await loadCustomers();}else{showLogin();}
+    const {error}=await withTimeout(
+      db.auth.signInWithPassword({email:creds.email,password:creds.pwd}),
+      12000,'Signing in');
+    if(error){
+      showLogin();
+      const el=document.getElementById('login-error');
+      if(el){el.textContent='Please tap Sign In to continue.';el.style.display='block';}
+    }
+    // success -> SIGNED_IN handler above runs loadCustomers()
   }catch(e){
-    if(_initResolved)return;
-    _initResolved=true;clearTimeout(_initTimeout);
-    db.auth.signOut({scope:'local'}).catch(()=>{});
+    // signal dropped / sign-in timed out - show the pre-filled form, one tap to retry
     showLogin();
     const el=document.getElementById('login-error');
-    if(el){el.textContent='Your saved login got stuck restoring - please sign in again.';el.style.display='block';}
+    if(el){el.textContent='Tap Sign In to continue.';el.style.display='block';}
   }
-})();
-(async()=>{
-  try{
-    db.auth.onAuthStateChange(async(event,session)=>{
-      // INITIAL_SESSION is handled by the getSession() race above; only act on real changes
-      if(event==='INITIAL_SESSION')return;
-      try{
-        if(event==='SIGNED_IN'){
-          _initResolved=true;clearTimeout(_initTimeout);
-          await loadCustomers();
-        } else if(event==='SIGNED_OUT'){
-          _initResolved=true;clearTimeout(_initTimeout);
-          showLogin();customers=[];
-        }
-      }catch(e){
-        console.error(e);
-        showLogin();
-        const el=document.getElementById('login-error');
-        if(el){el.textContent='Something went wrong loading your account: '+(e.message||e);el.style.display='block';}
-      }
-    });
-  }catch(e){showLogin();}
 })();
 </script>
 </body>

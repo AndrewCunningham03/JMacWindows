@@ -325,6 +325,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="btn btn-blue btn-full" onclick="login()" style="font-size:15px;padding:13px;margin-top:4px">Sign In</button>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);opacity:.6;margin-top:14px">v9</div>
   </div>
 </div>
 
@@ -334,6 +335,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div style="color:var(--text-muted);font-size:14px" id="loading-text">Loading your customers…</div>
   <button onclick="location.reload()" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Tap to retry</button>
   <button onclick="try{db.auth.signOut()}catch(e){};location.reload()" style="margin-top:8px;background:none;border:none;font-size:12px;color:var(--text-muted);text-decoration:underline;cursor:pointer;display:none" id="escape-btn-2">Still stuck after retrying? Tap to sign out fully</button>
+  <div style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-muted);opacity:.6">v9</div>
   <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},5000)
   setTimeout(()=>{const b=document.getElementById('escape-btn-2');if(b)b.style.display='block';},20000)</script>
 </div>
@@ -708,34 +710,67 @@ window.addEventListener('offline',updateLoadingText);
 window.addEventListener('online',updateLoadingText);
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
+// Caps any network call so it can never hang the loading screen forever.
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error((label||'Network')+' timed out')),ms))
+  ]);
+}
 async function loadCustomers(){
   showLoading();
-  // Load customers
-  const {data,error}=await db.from('customers').select('*').order('route_order',{ascending:true}).order('name');
-  if(error){showToast('Error loading');showApp();return;}
-  customers=data||[];
+  try{
+    // Get the logged-in user from the SESSION (local storage read, no network).
+    // Do NOT use db.auth.getUser() here - that makes a network call to the auth
+    // server which hangs on a just-resumed iPhone PWA (socket reconnecting), and
+    // was a major cause of the never-ending "Loading your customers..." spinner.
+    const {data:sess}=await db.auth.getSession();
+    const user=sess&&sess.session&&sess.session.user;
+    currentUserEmail=(user&&user.email)||'';
+    currentUserId=(user&&user.id)||'';
 
-  // Load user profile + role
-  const {data:{user}}=await db.auth.getUser();
-  currentUserEmail=user?.email||'';
-  currentUserId=user?.id||'';
-  if(user){
-    let {data:profile}=await db.from('profiles').select('*').eq('id',user.id).single();
-    if(!profile){
-      const newProfile={id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'};
-      await db.from('profiles').insert(newProfile);
-      profile=newProfile;
+    // Load customers - capped so a dead/reconnecting socket can't hang forever.
+    const {data,error}=await withTimeout(
+      db.from('customers').select('*').order('route_order',{ascending:true}).order('name'),
+      12000,'Loading customers');
+    if(error)throw error;
+    customers=data||[];
+
+    if(user){
+      const {data:profile}=await withTimeout(
+        db.from('profiles').select('*').eq('id',user.id).single(),
+        12000,'Loading profile');
+      let prof=profile;
+      if(!prof){
+        prof={id:user.id,email:user.email,name:user.email.split('@')[0],role:'employee'};
+        await withTimeout(db.from('profiles').insert(prof),12000,'Creating profile').catch(()=>{});
+      }
+      currentUserRole=prof.role||'employee';
+      currentUserName=prof.name||user.email.split('@')[0];
     }
-    currentUserRole=profile.role||'employee';
-    currentUserName=profile.name||user.email.split('@')[0];
-  }
 
-  applyRoleUI();
-  showApp();
-  initBanner();
-  initChips();
-  renderDashboard();
-  renderCustomers();
+    sessionStorage.removeItem('_loadRetried');
+    applyRoleUI();
+    showApp();
+    initBanner();
+    initChips();
+    renderDashboard();
+    renderCustomers();
+  }catch(e){
+    // A network call hung or failed. Never leave the user on an endless spinner:
+    // reload once to retry with a fresh connection; if it fails again, show login.
+    console.error(e);
+    clearLoadWatchdog();
+    if(!sessionStorage.getItem('_loadRetried')){
+      sessionStorage.setItem('_loadRetried','1');
+      location.reload();
+    }else{
+      sessionStorage.removeItem('_loadRetried');
+      showLogin();
+      const el=document.getElementById('login-error');
+      if(el){el.textContent='Couldn\'t load your customers (connection issue). Please check signal and sign in again.';el.style.display='block';}
+    }
+  }
 }
 
 function applyRoleUI(){

@@ -614,7 +614,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 const SUPABASE_URL  = 'https://xkcottkbmjlvqempqlsx.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_OKoXX-AnIf1ci3yfzwg7DQ_Pygnu4rk';
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+// IMPORTANT (iOS PWA fix): supabase-js v2 uses the Web Locks API (navigator.locks)
+// to coordinate auth-token refresh between tabs. On an iPhone home-screen PWA, when
+// iOS freezes the app and you reopen it while still logged in, that lock can stay
+// stuck held by the frozen context - so the session-refresh waits forever and the
+// app hangs on "Loading...". Signing out first avoids it because there's no session
+// to refresh. This is a single-tab phone app, so we don't need cross-tab locking:
+// override `lock` with a no-op that just runs the function immediately. This removes
+// the hang at its source.
+const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    lock: async (_name, _acquireTimeout, fn) => await fn()
+  }
+});
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const ROUTES = ["Keady / Derrynoose","Armagh","Clady","Kileavy / Dromintee","Camlough / Bessbrook","Newtown","Cullyhannah","Crossmaglen","Newry","Forkhill / Mullaghawn","Poyntzpass / Jerrettspass"];

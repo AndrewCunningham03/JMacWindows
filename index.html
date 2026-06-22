@@ -525,7 +525,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div class="screen-body">
     <div class="field-row">
       <div class="field"><label>Name *</label><input id="f-name" type="text" placeholder="Full name" autocomplete="off"></div>
-      <div class="field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
+      <div class="field" id="f-price-field"><label>Price (£)</label><input id="f-price" type="number" placeholder="20" inputmode="decimal"></div>
     </div>
     <div class="field"><label>Greeting name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input id="f-greeting" type="text" placeholder="e.g. Paula — used in WhatsApp messages" autocomplete="off"><div class="field-hint">Leave blank to use the first word of the name above</div></div>
     <div class="field"><label>Address</label><input id="f-addr" type="text" placeholder="Street, town, postcode" autocomplete="off"></div>
@@ -775,7 +775,7 @@ async function loadCustomers(){
 function applyRoleUI(){
   const isAdmin=currentUserRole==='admin';
   // FAB — only admin can add customers
-  document.getElementById('fab-add').style.display=isAdmin?'flex':'none';
+  document.getElementById('fab-add').style.display='flex';
   // Admin tab in nav
   document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
   document.getElementById('nav-money').style.display=isAdmin?'flex':'none';
@@ -828,7 +828,7 @@ function showTab(t,btn){
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   if(btn)btn.classList.add('active');
-  document.getElementById('fab-add').style.display=((t==='customers'||t==='admin')&&currentUserRole==='admin')?'flex':'none';
+  document.getElementById('fab-add').style.display=(t==='customers'||(t==='admin'&&currentUserRole==='admin'))?'flex':'none';
   if(t!=='map'){hideStopCard();}
   if(t==='today'){renderDashboard();}
   if(t==='customers'){renderCustomers();}
@@ -1527,6 +1527,7 @@ function openEditScreen(id){
     document.getElementById('f-route').selectedIndex=0;
     document.getElementById('f-freq').selectedIndex=0;
   }
+  document.getElementById('f-price-field').style.display=currentUserRole==='admin'?'':'none';
   screen.style.display='flex';
   requestAnimationFrame(()=>requestAnimationFrame(()=>screen.classList.add('open')));
 }

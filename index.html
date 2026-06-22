@@ -325,7 +325,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="btn btn-blue btn-full" onclick="login()" style="font-size:15px;padding:13px;margin-top:4px">Sign In</button>
-    <div style="text-align:center;font-size:11px;color:var(--text-muted);opacity:.6;margin-top:14px">v10</div>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);opacity:.6;margin-top:14px">v11</div>
   </div>
 </div>
 
@@ -335,7 +335,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div style="color:var(--text-muted);font-size:14px" id="loading-text">Loading your customers…</div>
   <button onclick="location.reload()" style="margin-top:20px;background:none;border:1px solid var(--gray-border);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;display:none" id="escape-btn">Tap to retry</button>
   <button onclick="try{db.auth.signOut()}catch(e){};location.reload()" style="margin-top:8px;background:none;border:none;font-size:12px;color:var(--text-muted);text-decoration:underline;cursor:pointer;display:none" id="escape-btn-2">Still stuck after retrying? Tap to sign out fully</button>
-  <div style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-muted);opacity:.6">v10</div>
+  <div style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-muted);opacity:.6">v11</div>
   <script>setTimeout(()=>{const b=document.getElementById('escape-btn');if(b)b.style.display='block';},5000)
   setTimeout(()=>{const b=document.getElementById('escape-btn-2');if(b)b.style.display='block';},20000)</script>
 </div>
@@ -616,17 +616,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 const SUPABASE_URL  = 'https://xkcottkbmjlvqempqlsx.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_OKoXX-AnIf1ci3yfzwg7DQ_Pygnu4rk';
 const { createClient } = supabase;
-// IMPORTANT (iOS PWA fix): the app hung on reopen because supabase-js tried to
-// RESTORE a stored login session, and on a frozen-then-resumed iPhone PWA that
-// restore/refresh can get stuck forever. The bulletproof fix: don't store the
-// session at all (persistSession:false). The login lives only in memory while
-// the app is open, so closing the app logs you out and reopening always goes
-// straight to a clean login screen - there is no stored session to get stuck on.
-// The token still auto-refreshes in memory so a long round won't get logged out
-// mid-use; the no-op lock keeps that refresh from ever hanging on Web Locks.
+// Session IS saved so you stay logged in when you leave for WhatsApp / a call /
+// Google Maps and come back, and across app reopens. The hang this used to cause
+// is prevented elsewhere by: (1) getSession() [local storage read] not getUser()
+// [network] on startup, (2) a no-op Web Locks lock so token refresh can't get
+// stuck, and (3) hard timeouts on every startup network call plus a pageshow
+// reload - so even a slow restore recovers in a few seconds instead of spinning
+// forever. Stays logged in without the freeze.
 const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    persistSession: false,
+    persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
     lock: async (_name, _acquireTimeout, fn) => await fn()

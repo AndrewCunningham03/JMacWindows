@@ -1728,6 +1728,27 @@ if('caches' in window){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// iOS doesn't just slow down a backgrounded/closed PWA - it can FREEZE its JS
+// entirely, including any setTimeout already scheduled. A timer set before the
+// freeze cannot be trusted to fire correctly after resume, because nothing was
+// running during the freeze. So instead of relying on a timer surviving the
+// freeze, listen for the browser's own lifecycle signal that fires the moment
+// a frozen page is restored, and force a hard, guaranteed-fresh reload then.
+window.addEventListener('pageshow', function(e){
+  if(e.persisted){ location.reload(); }
+});
+// Backup: if the tab/app becomes visible again and we're still stuck showing
+// the loading spinner (e.g. pageshow didn't fire as persisted for some reason),
+// force a reload after a short grace period to let a genuinely-fast load finish.
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible'){
+    setTimeout(()=>{
+      const loading=document.getElementById('loading-screen');
+      if(loading && loading.classList.contains('show')) location.reload();
+    },3000);
+  }
+});
+
 // On iOS, reopening the app after it's been fully closed for a while can leave
 // a SAVED session stuck trying to revalidate/refresh - that request can hang
 // indefinitely. If sign-out happened first there's no saved session to restore,

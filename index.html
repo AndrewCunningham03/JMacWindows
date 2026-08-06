@@ -559,6 +559,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Special instructions, access notes…" style="min-height:55px"></textarea></div>
   </div>
   <div class="screen-footer">
+    <button class="btn btn-red" id="edit-remove-btn" onclick="deleteCustomer()" style="display:none;flex:0 0 auto">🗑 Remove</button>
     <button class="btn btn-full btn-blue" id="save-btn" onclick="saveCustomer()">Save customer</button>
   </div>
 </div>
@@ -1514,10 +1515,12 @@ function openEditScreen(id){
   editingId=id;
   const screen=document.getElementById('edit-screen');
   const delBtn=document.getElementById('edit-delete-btn');
+  const removeBtn=document.getElementById('edit-remove-btn');
   if(id){
     const c=customers.find(x=>x.id===id);
     document.getElementById('edit-screen-title').textContent='Edit customer';
-    delBtn.style.display=currentUserRole==='admin'?'block':'none';
+    delBtn.style.display='block';
+    removeBtn.style.display='block';
     document.getElementById('f-name').value=c.name;
     document.getElementById('f-greeting').value=c.greeting_name||'';
     document.getElementById('f-addr').value=c.addr||'';
@@ -1535,6 +1538,7 @@ function openEditScreen(id){
   } else {
     document.getElementById('edit-screen-title').textContent='Add customer';
     delBtn.style.display='none';
+    removeBtn.style.display='none';
     ['name','greeting','addr','phone','whatsapp','notes','directions','gate','stripe','revolut'].forEach(f=>{
       const el=document.getElementById('f-'+f);if(el)el.value='';
     });
@@ -1606,11 +1610,14 @@ async function saveCustomer(){
   }
 }
 async function deleteCustomer(){
-  if(!confirm('Delete this customer? This cannot be undone.'))return;
-  await db.from('customers').delete().eq('id',editingId);
+  const c=customers.find(x=>x.id===editingId);if(!c)return;
+  // Deleting also wipes their cleaning history (the DB cascades), so spell that out.
+  if(!confirm(`Remove ${c.name}?\n\nThis deletes them and their whole job history for good. It cannot be undone.`))return;
+  const {error}=await db.from('customers').delete().eq('id',editingId);
+  if(error){showToast('Error: '+error.message);return;}
   customers=customers.filter(x=>x.id!==editingId);
-  closeEditScreen();renderCustomers();renderDashboard();
-  showToast('Customer deleted');
+  closeEditScreen();renderCustomers();renderDashboard();renderRoutes();
+  showToast(`Removed: ${c.name}`);
 }
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────

@@ -610,7 +610,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <div class="modal-overlay" id="visits-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Visit notes</div>
+    <div class="modal-title">Visit &amp; payment history</div>
     <div id="visits-modal-customer" style="font-size:15px;font-weight:600;color:var(--blue);margin-bottom:12px"></div>
     <div id="visits-list" style="max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     <div class="modal-actions">
@@ -1037,7 +1037,7 @@ function renderCustomers(){
             ${c.windows_count?`<span>🪟 ${c.windows_count}</span>`:''}
             ${c.gate_code?`<span>🔑 ${esc(c.gate_code)}</span>`:''}
           </div>
-          ${currentUserRole==='admin'&&owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; Owes &pound;${c.price} from last time</div>`:""}
+          ${owesFromLastTime(c)?`<div class="card-note" style="color:#dc2626;font-weight:600">&#9888; ${currentUserRole==='admin'?`Owes &pound;${c.price} from last time`:'Still owes from last time'}</div>`:""}
           ${c.notes?`<div class="card-note">⚠️ ${esc(c.notes)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
@@ -1056,7 +1056,7 @@ function renderCustomers(){
         ${currentUserRole==='admin'&&!c.paid&&waNum?`<a href="https://wa.me/${waNum.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(getMsg(c,'payment'))}" class="btn btn-sm btn-amber">💳 Payment reminder</a>`:''}
         <button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">Mark done</button>
         <button onclick="skipCustomer(${c.id})" class="btn btn-sm" title="Skip this round">⏭ Skip this round</button>
-        <button onclick="openVisitsModal(${c.id})" class="btn btn-sm" title="Notes from past visits">📝 Visit notes</button>
+        <button onclick="openVisitsModal(${c.id})" class="btn btn-sm" title="Past visits, payments and notes">📋 History</button>
       </div>
     </div>`;
   }).join('');
@@ -1184,7 +1184,7 @@ function showStop(idx){
   if(c.addr) actions.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.addr+', Northern Ireland')}&travelmode=driving" target="_blank" class="btn btn-sm btn-blue">🗺️ Navigate</a>`);
   actions.push(`<button onclick="openDoneModal(${c.id})" class="btn btn-sm btn-blue">✅ Done</button>`);
   actions.push(`<button onclick="skipCustomer(${c.id})" class="btn btn-sm" title="Skip this round">⏭ Skip</button>`);
-  actions.push(`<button onclick="openVisitsModal(${c.id})" class="btn btn-sm" title="Notes from past visits">📝 Notes</button>`);
+  actions.push(`<button onclick="openVisitsModal(${c.id})" class="btn btn-sm" title="Past visits, payments and notes">📋 History</button>`);
   document.getElementById('stop-actions').innerHTML=actions.join('');
   document.getElementById('stop-card').classList.add('active');
 }
@@ -1383,6 +1383,13 @@ async function togglePaid(id){
   c.paid=newVal;
   const {error}=await db.from('customers').update({paid:newVal}).eq('id',id);
   if(error){c.paid=!newVal;showToast('Error: '+error.message);return;}
+  // Keep this round's visit record in step, so the customer's History screen
+  // doesn't still say "Not paid" after they've settled up.
+  if(c.last_cleaned){
+    const {data:recent}=await db.from('cleaning_history').select('id').eq('customer_id',id)
+      .order('cleaned_date',{ascending:false}).limit(1);
+    if(recent&&recent.length)await db.from('cleaning_history').update({paid:newVal}).eq('id',recent[0].id);
+  }
   // keep every visible surface in sync
   renderPayMetrics();renderPayments();renderCustomers();renderRoutes();renderDashboard();
   // refresh the map stop-card if it's open on this customer
@@ -1525,22 +1532,45 @@ async function openVisitsModal(id){
     document.getElementById('visits-list').innerHTML=`<div style="text-align:center;padding:20px;color:var(--red)">Couldn't load visits — ${esc(e.message||'connection issue')}</div>`;
   }
 }
+let openVisits=[]; // the visit rows currently shown, so the paid toggle can read them back
 function renderVisitsList(visits){
+  openVisits=visits;
   const el=document.getElementById('visits-list');
   if(!visits.length){
-    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">No visits recorded yet.<br>Notes you add when tapping "Done" will show up here.</div>';
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">No visits recorded yet.<br>Once jobs are marked done they show up here, with who paid and any notes.</div>';
     return;
   }
   el.innerHTML=visits.map(v=>`
     <div style="border:1px solid var(--gray-border);border-radius:var(--radius);padding:10px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
         <div style="font-weight:600;font-size:14px">${new Date(v.cleaned_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        ${currentUserRole==='admin'?`<span class="badge ${v.paid?'badge-green':'badge-red'}">£${v.price||0}${v.paid?' ✓':''}</span>`:''}
+        <button class="badge-btn" onclick="toggleVisitPaid(${v.id},this)" title="Tap to change">
+          <span class="badge ${v.paid?'badge-green':'badge-red'}" id="visit-paid-${v.id}">${currentUserRole==='admin'?`£${v.price||0} `:''}${v.paid?'✓ Paid':'Not paid'}</span>
+        </button>
       </div>
       ${v.done_by?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">👤 ${esc(v.done_by)}</div>`:''}
       <textarea id="visit-note-${v.id}" placeholder="No notes for this visit — tap to add" style="min-height:50px;width:100%">${esc(v.visit_notes||'')}</textarea>
       <button class="btn btn-sm btn-blue" style="margin-top:6px" onclick="saveVisitNote(${v.id},this)">Save note</button>
     </div>`).join('');
+}
+// Corrects the paid record for one past visit. Needed because "paid" is captured
+// at the door — anyone who pays later by transfer would otherwise stay "Not paid"
+// in their history forever.
+async function toggleVisitPaid(visitId,btn){
+  const v=openVisits.find(x=>x.id===visitId);if(!v||btn.disabled)return;
+  const newVal=!v.paid;
+  btn.disabled=true;
+  const {error}=await db.from('cleaning_history').update({paid:newVal}).eq('id',visitId);
+  btn.disabled=false;
+  if(error){showToast('Error: '+error.message);return;}
+  v.paid=newVal;
+  const badge=document.getElementById('visit-paid-'+visitId);
+  if(badge){
+    badge.className='badge '+(newVal?'badge-green':'badge-red');
+    badge.textContent=`${currentUserRole==='admin'?`£${v.price||0} `:''}${newVal?'✓ Paid':'Not paid'}`;
+  }
+  if(currentUserRole==='admin'){renderPayments();renderDashboard();}
+  showToast(newVal?'Marked paid':'Marked unpaid');
 }
 async function saveVisitNote(visitId,btn){
   const ta=document.getElementById('visit-note-'+visitId);if(!ta)return;
@@ -1808,7 +1838,10 @@ async function newCycle(route){
   const list=customers.filter(c=>c.route===route);
   if(!list.length){showToast('No customers on this route');return;}
   const unpaidCustomers=list.filter(c=>!c.paid);
-  const warn=unpaidCustomers.length?`\n\n⚠️ ${unpaidCustomers.length} customer(s) still haven't paid — they'll be recorded on the Owing list${currentUserRole==='admin'?' in Admin so you can chase them up':' so the boss can chase them up'}.`:'';
+  // Name them — whoever resets the round needs to know who to chase before it's wiped.
+  const names=unpaidCustomers.slice(0,12).map(c=>`• ${c.name}`).join('\n');
+  const more=unpaidCustomers.length>12?`\n• …and ${unpaidCustomers.length-12} more`:'';
+  const warn=unpaidCustomers.length?`\n\n⚠️ ${unpaidCustomers.length} still haven't paid:\n${names}${more}\n\nThey'll be recorded on the Owing list${currentUserRole==='admin'?' in Admin so you can chase them up':' so the boss can chase them up'}.`:'';
   if(!confirm(`Start the next round for ${route}?\n\nAll ${list.length} customers will be reset ready to clean again (marked unpaid, cleared from "done"). Your cleaning history is kept.${warn}`))return;
 
   // Record anyone still unpaid into the owing list before wiping their paid status

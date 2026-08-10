@@ -1,0 +1,39 @@
+name: Deploy site
+
+# Publishes the app to GitHub Pages on every push to main.
+#
+# Why this file exists: GitHub's built-in "pages build and deployment" pipeline
+# got stuck on this repo (the build step ran 15 minutes and was cancelled, so
+# nothing ever deployed). This workflow does the publish directly and skips
+# that pipeline. It needs Settings > Pages > Source set to "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # lets you re-run it by hand from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If two pushes land close together, let the newer one win.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5     # fail fast instead of hanging for 15 minutes
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .          # the whole repo root - index.html, icons, manifest
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -571,7 +571,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div style="font-size:14px;line-height:1.7;color:var(--text)">
       <p style="margin-bottom:12px"><strong>1. Tap "Done"</strong> on a customer once you've cleaned their windows. It records the date and (if you collected cash) marks them paid.</p>
       <p style="margin-bottom:12px"><strong>2. They stay "done"</strong> until the next round starts — even if you cleaned them yesterday, not just today. The ✓ and date next to their name show when it was actually done.</p>
-      <p style="margin-bottom:12px"><strong>3. "↻ Next round"</strong> (in the Routes tab, admin only) resets a whole route back to not-done and unpaid, ready to clean again. Nothing is deleted — every past job is still saved in History.</p>
+      <p style="margin-bottom:12px"><strong>3. "↻ Next round"</strong> (in the Routes tab) resets a whole route back to not-done and unpaid, ready to clean again. Nothing is deleted — every past job is still saved in History.</p>
       <p style="margin-bottom:0"><strong>4. "Overdue"</strong> just means it's been longer than usual since their last clean (35 days for monthly, 70 for every-2-months).</p>
     </div>
     <div class="modal-actions">
@@ -948,7 +948,7 @@ function renderTodayRound(){
   const allDone=doneCount===list.length;
   const collectedToday=list.filter(c=>c.last_cleaned===todayStr&&c.paid&&currentUserRole==='admin').reduce((s,c)=>s+Number(c.price||0),0);
   el.innerHTML=`
-    ${allDone?`<div style="background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:16px;text-align:center;font-weight:700;margin-bottom:12px">🎉 ${esc(todayRoute)} all done this round!${currentUserRole==='admin'?`<div style="font-weight:600;font-size:13px;margin-top:4px">Tap "↻ Next round" in Routes when ready to start again${collectedToday?` · £${collectedToday} collected today`:''}</div>`:''}</div>`:`<button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
+    ${allDone?`<div style="background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:16px;text-align:center;font-weight:700;margin-bottom:12px">🎉 ${esc(todayRoute)} all done this round!<div style="font-weight:600;font-size:13px;margin-top:4px">Tap "↻ Next round" in Routes when ready to start again${currentUserRole==='admin'&&collectedToday?` · £${collectedToday} collected today`:''}</div></div>`:`<button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="navigateRouteByName('${todayRoute.replace(/'/g,"\\'")}')">🗺️ Navigate this route</button>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${doneCount} of ${list.length} done this round</div>`}
     ${list.map((c,i)=>{
       const done=!!c.last_cleaned;
@@ -1270,7 +1270,8 @@ function renderRoutes(){
     const earned=list.filter(c=>c.paid).reduce((s,c)=>s+Number(c.price),0);
     const total=list.reduce((s,c)=>s+Number(c.price),0);
     return`<div class="route-section">
-      <div class="route-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></span></div>
+      <div class="route-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>📍 ${esc(r)} <span class="route-count">(${list.length})${currentUserRole==='admin'?` · £${earned}/£${total}`:""}</span></span>
+        ${list.length?`<button class="btn btn-sm btn-amber" onclick="newCycle('${r.replace(/'/g,"")}')">↻ Next round</button>`:''}</div>
       <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:0 12px">
         ${list.map((c,i)=>`<div class="route-item">
           <div class="order-btns">
@@ -1807,7 +1808,7 @@ async function newCycle(route){
   const list=customers.filter(c=>c.route===route);
   if(!list.length){showToast('No customers on this route');return;}
   const unpaidCustomers=list.filter(c=>!c.paid);
-  const warn=unpaidCustomers.length?`\n\n⚠️ ${unpaidCustomers.length} customer(s) still haven't paid — they'll be added to the Owing list in Admin so you can chase them up.`:'';
+  const warn=unpaidCustomers.length?`\n\n⚠️ ${unpaidCustomers.length} customer(s) still haven't paid — they'll be recorded on the Owing list${currentUserRole==='admin'?' in Admin so you can chase them up':' so the boss can chase them up'}.`:'';
   if(!confirm(`Start the next round for ${route}?\n\nAll ${list.length} customers will be reset ready to clean again (marked unpaid, cleared from "done"). Your cleaning history is kept.${warn}`))return;
 
   // Record anyone still unpaid into the owing list before wiping their paid status
@@ -1833,7 +1834,10 @@ async function newCycle(route){
     if(r&&r.error){failCount++;}
     else{list[i].paid=false;list[i].last_cleaned='';}
   });
-  renderCustomers();renderPayments();renderDashboard();renderRoutes();renderAdmin();
+  renderCustomers();renderDashboard();renderRoutes();
+  // Money/Admin views are admin-only — skip them for employees so a failure there
+  // can't swallow the result message below.
+  if(currentUserRole==='admin'){renderPayments();renderAdmin();}
   if(failCount){showToast(`${failCount} customer(s) failed to reset — try again`);}
   else if(owingListBroken){showToast('Round reset, but owing list isn\'t set up — run owing_list.sql in Supabase');}
   else{showToast(`Next round started for ${route} — ${list.length} reset`);}
